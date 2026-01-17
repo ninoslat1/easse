@@ -1,7 +1,7 @@
 export const createSSEResponse = <T>(
   fetchDataFn: () => Promise<T>,
   options: { interval?: number; compareFn?: (a: any, b: any) => boolean } = {}
-) => {
+): Response => {
   const { interval = 10000, compareFn = (a, b) => JSON.stringify(a) === JSON.stringify(b) } = options;
   let intervalId: any;
 
@@ -38,13 +38,12 @@ export const createSSEResponse = <T>(
     },
   });
 
-  // Return standard Response object
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       "Connection": "keep-alive",
-      "X-Accel-Buffering": "no", // Penting untuk Nginx/Proxy
+      "X-Accel-Buffering": "no", 
     },
   });
 };
