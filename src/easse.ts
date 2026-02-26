@@ -1,36 +1,81 @@
+import { defaultCompareFn, shallowCompareFn } from "./libs/compare";
+import { depCheck } from "./libs/depth-check";
+import type { SSEOptions } from "./types";
+
 export const createSSEResponse = <T>(
   fetchDataFn: () => Promise<T>,
-  options: { interval?: number; compareFn?: (a: any, b: any) => boolean } = {}
+  options: SSEOptions<T> = {}
 ): Response => {
-  const { interval = 10000, compareFn = (a, b) => JSON.stringify(a) === JSON.stringify(b) } = options;
-  let intervalId: any;
+
+  const { interval = 10000, onError, maxRetries = 3, namespace = "data" } = options;
+  let intervalId: NodeJS.Timeout | number | undefined;
+  let retryCount = 0;
+  let activeCompareFn = options.compareFn;
 
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
       
-      const send = (data: any) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+      const send = (data: T) => {
+        const message = `${namespace}: ${JSON.stringify(data)}\n\n`;
+        controller.enqueue(encoder.encode(message));
       };
 
-      try {
-        let lastResult = await fetchDataFn();
-        send(lastResult);
+      const sendError = (error: Error) => {
+        const errorMessage = `event: error\n${namespace}: ${JSON.stringify({
+          message: error.message,
+          timestamp: Date.now()
+        })}\n\n`;
+        controller.enqueue(encoder.encode(errorMessage));
+      }
+
+      const fetchAndCompare = async (lastRes: T | null): Promise<T> => {
+        try {
+          const newRes = await fetchDataFn();
+
+          if (lastRes === null) {
+            // Pertama kali fetch, tentukan compareFn jika belum ada
+            if (!activeCompareFn) {
+              activeCompareFn = depCheck(newRes) ? defaultCompareFn : shallowCompareFn;
+              // console.log(`[SSE] Auto-selected: ${isDeep(newRes) ? 'Deep' : 'Shallow'} Compare`);
+            }
+            send(newRes);
+          } else if (!activeCompareFn!(lastRes, newRes)) {
+            send(newRes);
+            retryCount = 0;
+          }
+
+          return newRes;
+        } catch (err) {
+          retryCount++;
+          const error = err instanceof Error ? err : new Error(String(err));
+          
+          if (onError) onError(error);
+          sendError(error);
+          
+          if (retryCount >= maxRetries) {
+            clearInterval(intervalId);
+            controller.error(error);
+          }
+          
+          throw error;
+        }
+      }
+
+       try {
+        let lastResult = await fetchAndCompare(null);
 
         intervalId = setInterval(async () => {
           try {
-            const newResult = await fetchDataFn();
-            if (!compareFn(lastResult, newResult)) {
-              send(newResult);
-              lastResult = newResult;
-            }
-          } catch (err) {
-            controller.error(err);
-            clearInterval(intervalId);
+            lastResult = await fetchAndCompare(lastResult);
+          } catch {
+
           }
         }, interval);
+        
       } catch (err) {
-        controller.error(err);
+        const error = err instanceof Error ? err : new Error(String(err));
+        controller.error(error);
       }
     },
     cancel() {

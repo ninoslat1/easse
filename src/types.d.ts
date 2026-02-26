@@ -1,7 +1,9 @@
-export interface SSEOptions {
+export interface SSEOptions<T> {
   interval?: number;
-  onError?: (error: any) => void;
-  compareFn?: (oldData: any, newData: any) => boolean;
+  onError?: (error: Error) => void;
+  compareFn?: (a: T, b: T) => boolean;
+  namespace?: string
+  maxRetries?: number;
 }
 
 export interface SSEHeaders {
