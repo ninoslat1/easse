@@ -34,10 +34,8 @@ export const createSSEResponse = <T>(
           const newRes = await fetchDataFn();
 
           if (lastRes === null) {
-            // Pertama kali fetch, tentukan compareFn jika belum ada
             if (!activeCompareFn) {
               activeCompareFn = depCheck(newRes) ? defaultCompareFn : shallowCompareFn;
-              // console.log(`[SSE] Auto-selected: ${isDeep(newRes) ? 'Deep' : 'Shallow'} Compare`);
             }
             send(newRes);
           } else if (!activeCompareFn!(lastRes, newRes)) {

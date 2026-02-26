@@ -1,6 +1,11 @@
 {
   "name": "@digiworks/easse",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
-  "exports": "./src/easse.ts"
+  "exports": "./src/easse.ts",
+  "description": "Lightweight SSE adapters for your backend",
+  "supportedRuntimes": {
+    "node": true,
+    "bun": true
+  }
 }
