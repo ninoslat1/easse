@@ -1,11 +1,26 @@
 {
-  "name": "easse",
-  "module": "easse.ts",
+  "name": "@ninoslat1/easse",
+  "version": "0.0.1",
   "type": "module",
+  "main": "./dist/easse.js",
+  "module": "./dist/easse.mjs",
+  "types": "./dist/easse.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/easse.mjs",
+      "require": "./dist/easse.js",
+      "types": "./dist/easse.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Lightweight SSE adapters for your backend",
   "author": "ninoslat1",
   "license": "MIT",
-  "private": true,
   "devDependencies": {
     "@types/bun": "latest",
     "mitata": "^1.0.34",
