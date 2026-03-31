@@ -5,7 +5,8 @@ on:
       - main
 
 jobs:
-  publish:
+  publish-jsr:
+    name: Publish to JSR
     runs-on: ubuntu-latest
     permissions:
       contents: read
