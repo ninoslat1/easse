@@ -7,10 +7,30 @@ export const createSSEResponse = <T>(
   options: SSEOptions<T> = {}
 ): Response => {
 
-  const { interval = 10000, onError, maxRetries = 3, namespace = "data" } = options;
+  const { interval = 10000, onError, maxRetries = 3, namespace = "data", cors } = options;
   let intervalId: NodeJS.Timeout | number | undefined;
   let retryCount = 0;
   let activeCompareFn = options.compareFn;
+
+  const headers = new Headers({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no",
+  })
+
+  if (cors){
+    if (typeof cors === "boolean"){
+      headers.set("Access-Control-Allow-Origin", "*");
+      headers.set("Access-Control-Allow-Headers", "*");
+    } else {
+      if (cors.origin) headers.set("Access-Control-Allow-Origin", Array.isArray(cors.origin) ? cors.origin.join(",") : cors.origin);
+      if (cors.credentials) headers.set("Access-Control-Allow-Credentials", "true");
+      if (cors.headers) headers.set("Access-Control-Allow-Headers", cors.headers);
+      else headers.set("Access-Control-Allow-Headers", "*");
+    }
+  }
+
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -81,12 +101,5 @@ export const createSSEResponse = <T>(
     },
   });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
-      "X-Accel-Buffering": "no", 
-    },
-  });
+  return new Response(stream, {headers});
 };

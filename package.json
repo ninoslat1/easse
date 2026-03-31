@@ -1,28 +1,12 @@
 {
   "name": "@ninoslat1/easse",
   "version": "0.0.1",
-  "type": "module",
+  "author": "ninoslat1",
   "main": "./dist/easse.js",
   "module": "./dist/easse.mjs",
-  "types": "./dist/easse.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/easse.mjs",
-      "require": "./dist/easse.js",
-      "types": "./dist/easse.d.ts"
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "description": "Lightweight SSE adapters for your backend",
-  "author": "ninoslat1",
-  "license": "MIT",
   "devDependencies": {
     "@types/bun": "latest",
+    "jsr": "^0.14.3",
     "mitata": "^1.0.34",
     "tsup": "^8.5.1",
     "vitepress": "^1.6.4"
@@ -30,8 +14,20 @@
   "peerDependencies": {
     "typescript": "^5"
   },
-  "dependencies": {
-    "jsr": "^0.13.5"
+  "exports": {
+    ".": {
+      "import": "./dist/easse.mjs",
+      "require": "./dist/easse.js",
+      "types": "./dist/easse.d.ts"
+    }
+  },
+  "description": "Lightweight SSE adapters for your backend",
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "docs:dev": "vitepress dev docs",
@@ -39,5 +35,7 @@
     "docs:preview": "vitepress preview docs",
     "build": "tsup src/easse.ts --format cjs,esm --dts --clean",
     "dev": "tsup src/easse.ts --format cjs,esm --watch --dts"
-  }
+  },
+  "type": "module",
+  "types": "./dist/easse.d.ts"
 }

@@ -4,6 +4,13 @@ export interface SSEOptions<T> {
   compareFn?: (a: T, b: T) => boolean;
   namespace?: string
   maxRetries?: number;
+  cors?: boolean | CorsOptions
+}
+
+export interface CorsOptions {
+  origin?: string | string[];
+  credentials?: boolean;
+  headers?: string;
 }
 
 export interface SSEHeaders {
