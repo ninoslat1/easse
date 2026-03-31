@@ -1,11 +1,15 @@
 {
   "name": "easse",
-  "module": "index.ts",
+  "module": "easse.ts",
   "type": "module",
+  "description": "Lightweight SSE adapters for your backend",
+  "author": "ninoslat1",
+  "license": "MIT",
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
     "mitata": "^1.0.34",
+    "tsup": "^8.5.1",
     "vitepress": "^1.6.4"
   },
   "peerDependencies": {
@@ -17,6 +21,8 @@
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "build": "tsup src/easse.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/easse.ts --format cjs,esm --watch --dts"
   }
 }
