@@ -4,22 +4,31 @@ layout: home
 
 hero:
   name: "Easse"
-  text: "Lightweight SSE adapters for your backend"
-  tagline: My great project tagline
+  text: "Server Sent-Events adapters for your backend"
+  tagline: Easse is a lightweight SSE adapter with zero dependency and extensible feature.
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: What is Easse?
+      link: /intro
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Quickstart
+      link: /onboard
+    - theme: alt
+      text: GitHub
+      link: https://github.com/ninoslat1/easse
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Plug n Play
+    icon: 🔌
+    details: Integrate seamlessly with your controller (or routes)
+  - title: Lightweight
+    icon: ⚡
+    details: Zero dependecies for the blazing fast performance
+  - title: Extensible
+    icon: ➕
+    details: Easily extend with your backend rules
+  - title: Framework Agnostic
+    icon: ⚙
+    details: Integrate with your own JavaScript runtime
 ---
 

@@ -1,6 +1,6 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "ninoslat1",
   "main": "./dist/easse.js",
   "module": "./dist/easse.mjs",
@@ -16,7 +16,7 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/easse.mjs",
+      "import": "./dist/easse.js",
       "require": "./dist/easse.js",
       "types": "./dist/easse.d.ts"
     }
@@ -30,6 +30,7 @@
     "access": "public"
   },
   "scripts": {
+    "release": "npm version patch && node -e \"const fs=require('fs'); const j=JSON.parse(fs.readFileSync('./jsr.json')); const p=JSON.parse(fs.readFileSync('./package.json')); j.version=p.version; fs.writeFileSync('./jsr.json', JSON.stringify(j, null, 2))\" && git push --follow-tags",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
