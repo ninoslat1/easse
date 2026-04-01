@@ -36,6 +36,8 @@ export const createSSEResponse = <T>(
     async start(controller) {
       const encoder = new TextEncoder();
       
+      controller.enqueue(encoder.encode(": connected\n\n"));
+
       const send = (data: T) => {
         const message = `${namespace}: ${JSON.stringify(data)}\n\n`;
         controller.enqueue(encoder.encode(message));
@@ -48,6 +50,14 @@ export const createSSEResponse = <T>(
         })}\n\n`;
         controller.enqueue(encoder.encode(errorMessage));
       }
+
+      const heartbeatId = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(": ping\n\n"));
+        } catch {
+          clearInterval(heartbeatId);
+        }
+      }, options.heartbeatInterval ?? 30000);
 
       const fetchAndCompare = async (lastRes: T | null): Promise<T> => {
         try {
@@ -92,6 +102,7 @@ export const createSSEResponse = <T>(
         }, interval);
         
       } catch (err) {
+        clearInterval(heartbeatId)
         const error = err instanceof Error ? err : new Error(String(err));
         controller.error(error);
       }

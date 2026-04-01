@@ -1,5 +1,6 @@
 export interface SSEOptions<T> {
   interval?: number;
+  heartbeatInterval?: number
   onError?: (error: Error) => void;
   compareFn?: (a: T, b: T) => boolean;
   namespace?: string
