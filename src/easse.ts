@@ -9,6 +9,7 @@ export const createSSEResponse = <T>(
 
   const { interval = 10000, onError, maxRetries = 3, namespace = "data", cors } = options;
   let intervalId: NodeJS.Timeout | number | undefined;
+  let heartbeatId: ReturnType<typeof setInterval> | undefined;
   let retryCount = 0;
   let activeCompareFn = options.compareFn;
 
@@ -51,13 +52,13 @@ export const createSSEResponse = <T>(
         controller.enqueue(encoder.encode(errorMessage));
       }
 
-      const heartbeatId = setInterval(() => {
+      heartbeatId = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(": ping\n\n"));
         } catch {
           clearInterval(heartbeatId);
         }
-      }, options.heartbeatInterval ?? 30000);
+      }, options.heartbeatInterval ?? 1000);
 
       const fetchAndCompare = async (lastRes: T | null): Promise<T> => {
         try {
@@ -109,6 +110,7 @@ export const createSSEResponse = <T>(
     },
     cancel() {
       if (intervalId) clearInterval(intervalId);
+      if (heartbeatId) clearInterval(heartbeatId)
     },
   });
 
