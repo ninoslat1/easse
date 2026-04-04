@@ -14,10 +14,11 @@ export interface SSEOptions<T> {
    */
   maxRetries?: number;
   /** CORS configuration for custom headers
-   * 
+   * @default false
+   * Origin header for the whitelist/blacklist the request origin
+   * Credentials for the cookie authentication in SSE
    */
   cors?: boolean | CorsOptions
-  lastEventId?: string
 }
 
 export interface CorsOptions {

@@ -2,7 +2,7 @@ import { DataEqualCheckModule } from "./libs/compare";
 import type { SSEOptions } from "./types";
 
 class SSEResponseStream<T> {
-  private intervalId?: Timer;
+  private intervalId?: number;
   private retryCount = 0;
   private encoder = new TextEncoder();
   private activeCompareFn: (a: T, b: T) => boolean;

@@ -3,11 +3,7 @@ export class DataEqualCheckModule {
    * Checking object depth to mark it as shallow or nested for compare function
    * @param {object} obj - object data passed for check the object depth in data
    * @returns {boolean} - return boolean to qualify the compare (if true use default, and vice versa)
-   ** @example
-  * ```ts
-  * import {depCheck} from "@ninoslat1/easse"
-  * const qualifyCompareFn = depCheck(newRes) ? defaultCompareFn : shallowCompareFn;
-  * ```
+   **
   */
   static depCheck(obj: any): boolean {
     if (obj === null || typeof obj !== 'object') return false;

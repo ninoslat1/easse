@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
     /* Target Output */
+    "types": ["node", "bun"],
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "bundler", // Optimal untuk library modern
+    "moduleResolution": "bundler",
     "lib": ["ESNext", "DOM", "DOM.Iterable"], // Menambahkan tipe Response & ReadableStream
     
     /* Output Settings */
+    "rootDir": "./src",
     "outDir": "./dist",
     "declaration": true, // Menghasilkan file .d.ts untuk user TypeScript
     "declarationMap": true,

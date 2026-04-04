@@ -1,23 +1,24 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "ninoslat1",
   "main": "./dist/easse.js",
   "module": "./dist/easse.mjs",
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/bun": "^1.3.11",
+    "@types/node": "^25.5.2",
     "jsr": "^0.14.3",
     "mitata": "^1.0.34",
     "tsup": "^8.5.1",
     "vitepress": "^1.6.4"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^6.0.2"
   },
   "exports": {
     ".": {
       "import": "./dist/easse.js",
-      "require": "./dist/easse.js"    
+      "require": "./dist/easse.js"
     }
   },
   "description": "Lightweight SSE adapters for your backend",
@@ -29,12 +30,13 @@
     "access": "public"
   },
   "scripts": {
-    "release": "npm version patch && node -e \"const fs=require('fs'); const j=JSON.parse(fs.readFileSync('./jsr.json')); const p=JSON.parse(fs.readFileSync('./package.json')); j.version=p.version; fs.writeFileSync('./jsr.json', JSON.stringify(j, null, 2))\" && git push --follow-tags",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "build": "tsup src/easse.ts --format cjs,esm --dts --clean",
-    "dev": "tsup src/easse.ts --format cjs,esm --watch --dts"
+    "dev": "tsup src/easse.ts --format cjs,esm --watch --dts",
+    "bun-example": "bun run /src/examples/bun.index.ts",
+    "node-example": "node --experimental-strip-types ./src/examples/node.index.ts"
   },
   "type": "module",
   "types": "./dist/easse.d.ts"
