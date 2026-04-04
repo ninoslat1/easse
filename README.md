@@ -9,7 +9,7 @@ Lightweight SSE adapter for backend.
 * ⚡ Lightweight
 * ➕ Extensible
 
-Easse is a lightweight, zero-dependency library for managing Server-Sent Events (SSE). It features an universal compatibility with JavaScript Runtimes, easily extend with CORS configuration and data pooling interval, and zero dependency for the lightweight performance.
+Easse is a lightweight, zero-dependency library for managing Server-Sent Events (SSE). It features an universal compatibility with JavaScript Runtimes (currently work in NodeJS and Bun), easily extend with CORS configuration and data pooling interval, and zero dependency for the lightweight performance.
 
 ## Installation
 
@@ -23,6 +23,7 @@ pnpm install @ninoslat1/easse
     
 ## Documentation
 
+[Docs]("https://ninoslat1.github.io/easse/")
 
 ## License
 
