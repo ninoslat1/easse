@@ -32,4 +32,4 @@ Here is the simple Bun setup
                     }),
 ```
 
-For further example, check this [link]("https://github.com/ninoslat1/easse/tree/main/src/examples")
+For further example, check this [link](https://github.com/ninoslat1/easse/tree/main/src/examples)
