@@ -23,7 +23,7 @@ pnpm install @ninoslat1/easse
     
 ## Documentation
 
-[Docs]("https://ninoslat1.github.io/easse/")
+[Docs](https://ninoslat1.github.io/easse/)
 
 ## License
 

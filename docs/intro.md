@@ -13,8 +13,8 @@ Building SSE manually can be tricky:
 - Managing headers correctly
 - Formatting events
 - Handling multiple runtimes (Node, Bun, etc.)
+#### Easse solves these problems with a minimal abstraction layer.
 
-Easse solves these problems with a minimal abstraction layer.
 ---
 
 ## ✨ Key Features

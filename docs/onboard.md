@@ -2,8 +2,6 @@
 
 Get started with **Easse** in minutes.
 
----
-
 ## 📦 Installation
 
 ### Using npm
