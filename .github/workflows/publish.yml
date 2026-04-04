@@ -1,8 +1,11 @@
 name: Publish Package
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.github/**'
 
 jobs:
   publish-jsr:

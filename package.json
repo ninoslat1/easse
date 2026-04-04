@@ -1,6 +1,6 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "author": "ninoslat1",
   "main": "./dist/easse.js",
   "module": "./dist/easse.mjs",
@@ -17,8 +17,7 @@
   "exports": {
     ".": {
       "import": "./dist/easse.js",
-      "require": "./dist/easse.js",
-      "types": "./dist/easse.d.ts"
+      "require": "./dist/easse.js"    
     }
   },
   "description": "Lightweight SSE adapters for your backend",

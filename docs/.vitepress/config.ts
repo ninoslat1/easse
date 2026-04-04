@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: "./easse/",
+  base: "/easse/",
   title: "Easse",
   description: "Lightweight SSE adapters for your backend",
   themeConfig: {
