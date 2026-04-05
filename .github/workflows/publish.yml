@@ -6,6 +6,11 @@ on:
       - 'docs/**'
       - '**.md'
       - '.github/**'
+      - 'src/examples/bun.index.ts'
+      - 'src/examples/node.index.ts'
+      - 'src/examples/express.index.ts'
+      - 'src/examples/hono.index.ts'
+      - 'src/examples/elysia.index.ts'
 
 jobs:
   publish-jsr:

@@ -18,12 +18,14 @@ bun add @ninoslat1/easse
 # or
 npm install @ninoslat1/easse
 # or
-pnpm install @ninoslat1/easse
+deno install @ninoslat1/easse
+# or
+npx jsr add @ninoslat1/easse
 ```
     
 ## Documentation
 
-[Docs](https://ninoslat1.github.io/easse/)
+For the documentation, see https://ninoslat1.github.io/easse/
 
 ## License
 
