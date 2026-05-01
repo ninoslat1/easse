@@ -2,16 +2,16 @@ import { DataEqualCheckModule } from "./libs/compare";
 import type { SSEOptions } from "./types";
 
 class SSEResponseStream<T> {
-  private intervalId?: number;
+  private intervalId?: ReturnType<typeof setInterval>;
   private retryCount = 0;
   private encoder = new TextEncoder();
-  private activeCompareFn: (a: T, b: T) => boolean;
+  private readonly customCompareFn: ((a: T, b: T) => boolean) | undefined;
 
   constructor(
     private fetchDataFn: () => Promise<T>,
     private options: SSEOptions<T>
   ) {
-    this.activeCompareFn = options.compareFn!;
+    this.customCompareFn = options.compareFn;
   }
 
   public create(): Response {
@@ -44,6 +44,11 @@ class SSEResponseStream<T> {
     return h;
   }
 
+  private resolveCompareFn(lastRes: T, newRes: T): (a: T, b: T) => boolean {
+    if (this.customCompareFn) return this.customCompareFn;
+    return DataEqualCheckModule.resolveCompareFn(lastRes, newRes);
+  }
+
   private async start(controller: ReadableStreamDefaultController) {
     controller.enqueue(this.encoder.encode(": connected\n\n"));
 
@@ -60,13 +65,19 @@ class SSEResponseStream<T> {
     const exec = async (lastRes: T | null): Promise<T | null> => {
       try {
         const newRes = await this.fetchDataFn();
-        if (lastRes === null && !this.activeCompareFn) {
-          this.activeCompareFn = DataEqualCheckModule.depCheck(newRes) 
-          ? DataEqualCheckModule.deepCompare.bind(DataEqualCheckModule) 
-          : DataEqualCheckModule.shallowCompare.bind(DataEqualCheckModule);
+
+        if (lastRes === null) {
+          // First fetch — always send, no comparison needed
+          const message = `${namespace}: ${JSON.stringify(newRes)}\n\n`;
+          controller.enqueue(this.encoder.encode(message));
+          this.retryCount = 0;
+          return newRes;
         }
-        
-        if (lastRes === null || !this.activeCompareFn(lastRes, newRes)) {
+
+        // FIX 1 + 2: compareFn resolved here, every cycle, with both values
+        const compareFn = this.resolveCompareFn(lastRes, newRes);
+
+        if (!compareFn(lastRes, newRes)) {
           const message = `${namespace}: ${JSON.stringify(newRes)}\n\n`;
           controller.enqueue(this.encoder.encode(message));
           this.retryCount = 0;
@@ -90,9 +101,9 @@ class SSEResponseStream<T> {
   private handleError(err: any, controller: ReadableStreamDefaultController): any {
     this.retryCount++;
     const error = err instanceof Error ? err : new Error(String(err));
-    
+
     if (this.options.onError) this.options.onError(error);
-    
+
     const errMessage = `event: error\ndata: ${JSON.stringify({ message: error.message })}\n\n`;
     controller.enqueue(this.encoder.encode(errMessage));
 

@@ -11,6 +11,13 @@ export class DataEqualCheckModule {
     return values.some(val => val !== null && typeof val === 'object');
   }
 
+  static resolveCompareFn<T>(a: T, b: T): (x: T, y: T) => boolean {
+    const needsDeep = this.depCheck(a) || this.depCheck(b);
+    return needsDeep
+      ? this.deepCompare.bind(this)
+      : this.shallowCompare.bind(this);
+  }
+
   static shallowCompare(a: any, b: any): boolean {
     if (a === b) return true;
     if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return a === b;

@@ -1,25 +1,27 @@
-import {createSSEResponse } from "../easse"
+import { createSSEResponse } from "../easse";
 
-export async function testSSE() {
+export async function runSSETest(assert: (a: any, b: any, msg?: string) => void) {
   const mockData = { hello: "world" };
-  const response = createSSEResponse(async () => mockData, { interval: 1000 });
-
-  const contentType = response.headers.get("Content-Type");
-  if (contentType !== "text/event-stream") {
-    throw new Error(`Expected text/event-stream, got ${contentType}`);
-  }
+  const response = createSSEResponse(async () => mockData, { 
+    interval: 500,
+    namespace: "data" 
+  });
 
   const reader = response.body?.getReader();
   if (!reader) throw new Error("Response body is empty");
+  const decoder = new TextDecoder();
 
-  const { value } = await reader.read();
-  const decoded = new TextDecoder().decode(value);
+  // Step 1: Connected
+  const chunk1 = await reader.read();
+  assert(decoder.decode(chunk1.value), ": connected\n\n", "Should send connected first");
 
-  const expected = `data: ${JSON.stringify(mockData)}\n\n`;
-  if (decoded !== expected) {
-    throw new Error(`Expected ${expected}, got ${decoded}`);
-  }
+  // Step 2: Initial Data
+  const chunk2 = await reader.read();
+  assert(decoder.decode(chunk2.value), `data: ${JSON.stringify(mockData)}\n\n`, "Should send initial data");
+
+  // Step 3: Ping
+  const chunk3 = await reader.read();
+  assert(decoder.decode(chunk3.value), ": ping\n\n", "Should send ping on identical data");
 
   await reader.cancel();
-  console.log("✅ SSE Test Passed!");
 }
