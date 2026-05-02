@@ -35,3 +35,5 @@ docs/.vitepress/cache
 .DS_Store
 
 package-lock.json
+benchmark.md
+bench.txt

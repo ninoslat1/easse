@@ -36,6 +36,31 @@ For the documentation, see https://ninoslat1.github.io/easse/
 ### v0.0.1
 - Optimize auto diffing mechanism
 
+## Benchmark
+
+Generated from mitata benchmark
+
+---
+
+### 🧠 Comparison Logic Performance
+
+| Test Case | ops/sec ↑ | avg (ms) ↓ |
+|-----------|----------|------------|
+| Same Reference (Flat) | 2,550,499,898 | 0.000000 |
+| Shallow Compare (Flat Data - Different) | 10,490,978 | 0.000095 |
+| Deep Compare (Flat Data - Different) | 5,775,339 | 0.000173 |
+| Deep Compare (Nested Data - Identical) | 2,447,501,101 | 0.000000 |
+| Deep Compare (Nested Data - Different) | 3,472,102 | 0.000288 |
+| DepCheck Performance | 9,061,254 | 0.000110 |
+
+### 🌐 HTML Processing Performance
+
+| Test Case | ops/sec ↑ | avg (ms) ↓ |
+|-----------|----------|------------|
+| HTML Sanitization Only (Minify: false) | 237,530 | 0.004210 |
+| HTML Full Minify (Minify: true) | 57,537 | 0.017380 |
+| JSON Stringify (Baseline) | 485,437 | 0.002060 |
+
 ## License
 
 MIT
