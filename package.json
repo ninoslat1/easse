@@ -1,6 +1,6 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "author": "ninoslat1",
   "main": "./dist/easse.js",
   "module": "./dist/easse.mjs",
@@ -38,8 +38,9 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "build": "tsup src/easse.ts --format cjs,esm --dts --clean",
+    "build": "tsup",
     "dev": "tsup src/easse.ts --format cjs,esm --watch --dts",
+    "bench": "bun run ./src/benchmarks/compare.bench.ts",
     "bun-example": "bun run /src/examples/bun.index.ts",
     "node-example": "node --experimental-strip-types ./src/examples/node.index.ts",
     "test:bun": "bun test ./src/tests/bun.test.ts",

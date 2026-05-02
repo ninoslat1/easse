@@ -19,6 +19,7 @@ export interface SSEOptions<T> {
    * Credentials for the cookie authentication in SSE
    */
   cors?: boolean | CorsOptions
+  minify?: boolean
 }
 
 export interface CorsOptions {

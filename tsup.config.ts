@@ -1,0 +1,18 @@
+// tsup.config.ts
+import { defineConfig } from 'tsup';
+
+export default defineConfig({
+  entry: ['src/easse.ts'],
+  
+  format: ['cjs', 'esm'],
+  
+  dts: true,
+  
+  clean: true,
+  
+  minify: true,
+  
+  sourcemap: true,
+//   splitting: false,
+  target: 'esnext',
+});

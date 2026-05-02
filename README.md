@@ -27,6 +27,15 @@ npx jsr add @ninoslat1/easse
 
 For the documentation, see https://ninoslat1.github.io/easse/
 
+## Release Notes
+
+### v0.1.0
+- Optimize HTML streaming performance
+- Improve efficiency for realtime content delivery
+
+### v0.0.1
+- Optimize auto diffing mechanism
+
 ## License
 
 MIT

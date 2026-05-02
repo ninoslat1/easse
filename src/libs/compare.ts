@@ -1,48 +1,44 @@
+import { createHash } from "crypto";
+import { AutoDiffModule } from "./auto-diffing";
+import { DataHashModule } from "./hashing";
+
 export class DataEqualCheckModule {
+  constructor(
+    private autoDiff: AutoDiffModule,
+    // private hash: DataHashModule
+  ){}
   /**
    * Checking object depth to mark it as shallow or nested for compare function
    * @param {object} obj - object data passed for check the object depth in data
    * @returns {boolean} - return boolean to qualify the compare (if true use default, and vice versa)
    **
   */
-  static depCheck(obj: any): boolean {
+  depCheck(obj: any): boolean {
     if (obj === null || typeof obj !== 'object') return false;
     const values = Array.isArray(obj) ? obj : Object.values(obj);
     return values.some(val => val !== null && typeof val === 'object');
   }
 
-  static resolveCompareFn<T>(a: T, b: T): (x: T, y: T) => boolean {
+  resolveCompareFn<T>(a: T, b: T): (x: T, y: T) => boolean {
     const needsDeep = this.depCheck(a) || this.depCheck(b);
     return needsDeep
-      ? this.deepCompare.bind(this)
-      : this.shallowCompare.bind(this);
+      ? this.autoDiff.deepCompare.bind(this)
+      : this.autoDiff.shallowCompare.bind(this);
   }
 
-  static shallowCompare(a: any, b: any): boolean {
-    if (a === b) return true;
-    if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return a === b;
+  // resolveCompareFnV2<T>(a: T, _: T): (_: T, y: T) => boolean {
+  //   const strA = JSON.stringify(a);
+  //   const isLarge = strA.length > 102400;
 
-    const keysA = Object.keys(a);
-    if (keysA.length !== Object.keys(b).length) return false;
+  //   if (isLarge) {
+  //     const hashA = this.hash.hashData(strA)
+  //     return (_, y: T) => {
+  //       return hashA === this.hash.hashData(y);
+  //     };
+  //   }
 
-    return keysA.every(key => a[key] === b[key]);
-  }
-
-  static deepCompare(a: any, b: any): boolean {
-    if (a === b) return true;
-    if (a == null || b == null || typeof a !== typeof b) return false;
-    if (typeof a !== 'object') return a === b;
-
-    if (Array.isArray(a)) {
-      if (!Array.isArray(b) || a.length !== b.length) return false;
-      return a.every((val, i) => this.deepCompare(val, b[i]));
-    }
-
-    const keysA = Object.keys(a);
-    if (keysA.length !== Object.keys(b).length) return false;
-
-    return keysA.every(key => 
-      Object.prototype.hasOwnProperty.call(b, key) && this.deepCompare(a[key], b[key])
-    );
-  }
+  //   return typeof a === "object" && a !== null 
+  //     ? this.autoDiff.deepCompare.bind(this) 
+  //     : this.autoDiff.shallowCompare.bind(this);
+  // }
 }

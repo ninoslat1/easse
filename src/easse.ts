@@ -1,17 +1,25 @@
+import { AutoDiffModule } from "./libs/auto-diffing";
 import { DataEqualCheckModule } from "./libs/compare";
+import { DataHashModule } from "./libs/hashing";
+import { HTMLModule } from "./libs/html";
 import type { SSEOptions } from "./types";
 
 class SSEResponseStream<T> {
   private intervalId?: ReturnType<typeof setInterval>;
   private retryCount = 0;
+  private minifyHtml = new HTMLModule()
   private encoder = new TextEncoder();
-  private readonly customCompareFn: ((a: T, b: T) => boolean) | undefined;
+  private customCompareFn: ((a: T, b: T) => boolean) | undefined;
+  private minify = false; 
+  private autoDiff = new AutoDiffModule(this.minifyHtml);
+  private checker = new DataEqualCheckModule(this.autoDiff);
 
   constructor(
     private fetchDataFn: () => Promise<T>,
     private options: SSEOptions<T>
   ) {
     this.customCompareFn = options.compareFn;
+    this.minify = options.minify ?? false;
   }
 
   public create(): Response {
@@ -46,7 +54,7 @@ class SSEResponseStream<T> {
 
   private resolveCompareFn(lastRes: T, newRes: T): (a: T, b: T) => boolean {
     if (this.customCompareFn) return this.customCompareFn;
-    return DataEqualCheckModule.resolveCompareFn(lastRes, newRes);
+    return this.checker.resolveCompareFn(lastRes, newRes);
   }
 
   private async start(controller: ReadableStreamDefaultController) {
@@ -66,19 +74,19 @@ class SSEResponseStream<T> {
       try {
         const newRes = await this.fetchDataFn();
 
+        const format = this.autoDiff.comparePayload(newRes, this.minify);
+
         if (lastRes === null) {
-          // First fetch — always send, no comparison needed
-          const message = `${namespace}: ${JSON.stringify(newRes)}\n\n`;
+          const message = `${namespace}: ${format}\n\n`;
           controller.enqueue(this.encoder.encode(message));
           this.retryCount = 0;
           return newRes;
         }
 
-        // FIX 1 + 2: compareFn resolved here, every cycle, with both values
         const compareFn = this.resolveCompareFn(lastRes, newRes);
 
         if (!compareFn(lastRes, newRes)) {
-          const message = `${namespace}: ${JSON.stringify(newRes)}\n\n`;
+          const message = `${namespace}: ${format}\n\n`;
           controller.enqueue(this.encoder.encode(message));
           this.retryCount = 0;
           return newRes;

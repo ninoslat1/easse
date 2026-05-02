@@ -1,39 +1,106 @@
-import { run, bench, group } from 'mitata';
+import { run, bench, group, summary } from 'mitata';
 import { DataEqualCheckModule } from "../libs/compare";
+import { flatData1, flatData2, flatIdenticalData, mockHTML, nestedData1, nestedData2, nestedIdenticalData } from './bench.data';
+import { AutoDiffModule } from '../libs/auto-diffing';
+import { HTMLModule } from '../libs/html';
 
-const flatData1 = { id: 1, name: 'active', status: 'active' };
-const flatData2 = { id: 1, name: 'active', status: 'inactive' };
-const flatIdenticalData = { id: 1, name: "John Doe", status: 'active' };
+const minifyHtml = new HTMLModule()
+const autoDiff = new AutoDiffModule(minifyHtml);
+const checker = new DataEqualCheckModule(autoDiff);
 
-const nestedData1 = { id: 1, meta: { tags: ['a', 'b'], nested: { x: 1 } } };
-const nestedData2 = { id: 1, meta: { tags: ['a', 'b'], nested: { x: 2 } } };
-const nestedIdenticalData = { id: 1, meta: { tags: ['a', 'b'], nested: { x: 1 } } };
-
-group('Comparison Logic Performance (Class Based)', () => {
+group('Comparison Logic Performance (Class Based) V1', () => {
   
   bench("Same Reference (Flat)", () => {
-    DataEqualCheckModule.shallowCompare(flatIdenticalData, flatIdenticalData);
+    autoDiff.shallowCompare(flatIdenticalData, flatIdenticalData);
   });
 
-  bench('Shallow Compare (Flat Data - Different)', () => {
-    DataEqualCheckModule.shallowCompare(flatData1, flatData2);
-  });
-
-  bench('Deep Compare (Flat Data - Different)', () => {
-    DataEqualCheckModule.deepCompare(flatData1, flatData2);
-  });
+  summary(() => {
+    bench('Shallow Compare (Flat Data - Different)', () => {
+      autoDiff.shallowCompare(flatData1, flatData2);
+    });
+  
+    bench('Deep Compare (Flat Data - Different)', () => {
+      autoDiff.deepCompare(flatData1, flatData2);
+    });
+  })
 
   bench('Deep Compare (Nested Data - Identical)', () => {
-    DataEqualCheckModule.deepCompare(nestedIdenticalData, nestedIdenticalData);
+    autoDiff.deepCompare(nestedIdenticalData, nestedIdenticalData);
   });
 
   bench('Deep Compare (Nested Data - Different)', () => {
-    DataEqualCheckModule.deepCompare(nestedData1, nestedData2);
+    autoDiff.deepCompare(nestedData1, nestedData2);
   });
 
   bench('DepCheck Performance', () => {
-    DataEqualCheckModule.depCheck(nestedData1);
+    checker.depCheck(nestedData1);
   });
 });
+
+group("HTML Processing Performance", () => {
+  summary(() => {
+    bench("HTML Sanitization Only (Minify: false)", () => {
+      autoDiff.comparePayload(mockHTML, false);
+    });
+  
+    bench("HTML Full Minify (Minify: true)", () => {
+      autoDiff.comparePayload(mockHTML, true);
+    });
+  })
+
+  const jsonObject = { data: Array(20).fill({ name: "item", val: Math.random() }) };
+  bench("JSON Stringify (Baseline)", () => {
+    autoDiff.comparePayload(jsonObject, false);
+  });
+});
+
+// group("Comparison Logic Performance (Class Based) V2", () => {
+  
+//   summary(() => {
+//     bench("Comparison Resolver V1 (Flat Data - Identical)", () => {
+//       const fn = checker.resolveCompareFn(flatIdenticalData, flatIdenticalData);
+//       fn(flatIdenticalData, flatIdenticalData)
+//     })
+  
+//     bench("Comparison Resolver V2 (Flat Data - Identical)", () => {
+//       const fn = checker.resolveCompareFnV2(flatIdenticalData, flatIdenticalData);
+//       fn(flatIdenticalData, flatIdenticalData);
+//     });
+//   })
+
+//   summary(() => {
+//     bench("Comparison Resolver V1 (Flat Data - Different)", () => {
+//       const fn = checker.resolveCompareFn(flatData1, flatData2);
+//       fn(flatData1, flatData2)
+//     })
+  
+//     bench("Comparison Resolver V2 (Flat Data - Different)", () => {
+//       const fn = checker.resolveCompareFnV2(flatData1, flatData2);
+//       fn(flatData1, flatData2);
+//     });
+//   })
+
+//   summary(() => {
+//     bench("V1: Deep Compare (Static 60KB)", () => {
+//       autoDiff.deepCompare(LARGE_STATIC, [...LARGE_STATIC]);
+//     });
+
+//     bench("V2: Smart Detect Hashing (Static 60KB)", () => {
+//       const fn = checker.resolveCompareFnV2(LARGE_STATIC, [...LARGE_STATIC]);
+//       fn(LARGE_STATIC, [...LARGE_STATIC]);
+//     });
+//   });
+
+//   summary(() => {
+//     bench("V1: Deep Compare (Dynamic 60KB)", () => {
+//       autoDiff.deepCompare(dynamicA, dynamicB);
+//     });
+
+//     bench("V2: Smart Detect Hashing (Dynamic 60KB)", () => {
+//       const fn = checker.resolveCompareFnV2(dynamicA, dynamicB);
+//       fn(dynamicA, dynamicB);
+//     });
+//   });
+// });
 
 await run();
