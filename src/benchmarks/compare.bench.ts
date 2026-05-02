@@ -7,6 +7,14 @@ import { HTMLModule } from '../libs/html';
 const minifyHtml = new HTMLModule()
 const autoDiff = new AutoDiffModule(minifyHtml);
 const checker = new DataEqualCheckModule(autoDiff);
+const rawSize = new TextEncoder().encode(mockHTML).length;
+const sanitized = autoDiff.comparePayload(mockHTML, false);
+const minified = autoDiff.comparePayload(mockHTML, true);
+
+const sanitizedSize = new TextEncoder().encode(sanitized).length;
+const minifiedSize = new TextEncoder().encode(minified).length;
+
+const saved = ((rawSize - minifiedSize) / rawSize * 100).toFixed(2);
 
 group('Comparison Logic Performance (Class Based) V1', () => {
   
@@ -36,6 +44,17 @@ group('Comparison Logic Performance (Class Based) V1', () => {
     checker.depCheck(nestedData1);
   });
 });
+
+console.log(`
+📊 **Payload Size Comparison:**
+---------------------------------------------
+| Type         | Size (Bytes) | Reduction    |
+|--------------|--------------|--------------|
+| Raw HTML     | ${rawSize.toLocaleString()} B      | -            |
+| Sanitized    | ${sanitizedSize.toLocaleString()} B      | ${((rawSize - sanitizedSize) / rawSize * 100).toFixed(2)}%        |
+| Minified     | ${minifiedSize.toLocaleString()} B      | ${saved}%       |
+---------------------------------------------
+`);
 
 group("HTML Processing Performance", () => {
   summary(() => {
