@@ -55,11 +55,11 @@ Generated from mitata benchmark
 
 ### 🌐 HTML Processing Performance
 
-| Test Case | ops/sec ↑ | avg (ms) ↓ |
-|-----------|----------|------------|
-| HTML Sanitization Only (Minify: false) | 237,530 | 0.004210 |
-| HTML Full Minify (Minify: true) | 57,537 | 0.017380 |
-| JSON Stringify (Baseline) | 485,437 | 0.002060 |
+| Test Case | ops/sec ↑ | avg (ms) ↓ | size (bytes) | reduction |
+|-----------|----------|------------|------------|------------|
+| HTML Sanitization Only (Minify: false) | 243,902 | 0.004100 | 3,032 | 3.19% |
+| HTML Full Minify (Minify: true) | 56,786 | 0.017610 | 1,428 | 54.41% |
+| JSON Stringify (Baseline) | 483,092 | 0.002070 | 3,132 | - |
 
 ## License
 
