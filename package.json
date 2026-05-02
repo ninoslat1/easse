@@ -1,6 +1,6 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "ninoslat1",
   "main": "./dist/easse.js",
   "module": "./dist/easse.mjs",
