@@ -20,6 +20,7 @@ export interface SSEOptions<T> {
    */
   cors?: boolean | CorsOptions
   minify?: boolean
+  res?: any
 }
 
 export interface CorsOptions {

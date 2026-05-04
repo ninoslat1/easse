@@ -1,6 +1,6 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "ninoslat1",
   "main": "./dist/easse.js",
   "module": "./dist/easse.mjs",
@@ -43,6 +43,7 @@
     "bench": "bun run ./src/benchmarks/compare.bench.ts > bench.txt && bun run ./src/benchmarks/bench-to-md.ts",
     "bun-example": "bun run /src/examples/bun.index.ts",
     "node-example": "node --experimental-strip-types ./src/examples/node.index.ts",
+    "express-example": "node --experimental-strip-types ./src/examples/express.index.ts",
     "test:bun": "bun test ./src/tests/bun.test.ts",
     "test:node": "tsx --test ./src/tests/node.test.ts",
     "test:all": "npm run test:bun && npm run test:node"

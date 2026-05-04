@@ -1,6 +1,5 @@
 import { AutoDiffModule } from "./libs/auto-diffing";
 import { DataEqualCheckModule } from "./libs/compare";
-import { DataHashModule } from "./libs/hashing";
 import { HTMLModule } from "./libs/html";
 import type { SSEOptions } from "./types";
 
@@ -10,7 +9,7 @@ class SSEResponseStream<T> {
   private minifyHtml = new HTMLModule()
   private encoder = new TextEncoder();
   private customCompareFn: ((a: T, b: T) => boolean) | undefined;
-  private minify = false; 
+  private minify = false;
   private autoDiff = new AutoDiffModule(this.minifyHtml);
   private checker = new DataEqualCheckModule(this.autoDiff);
 
@@ -30,6 +29,31 @@ class SSEResponseStream<T> {
 
     return new Response(stream, { headers: this.buildHeaders() });
   }
+
+  public static async adaptResponse(webRes: Response, res?: any) {
+    if (res && res.write && typeof res.on === 'function') {
+        res.writeHead(webRes.status, Object.fromEntries(webRes.headers));
+
+        if (!webRes.body) return res.end();
+        
+        const reader = webRes.body.getReader();
+        
+        res.on('close', () => reader.cancel());
+
+        try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            res.write(value);
+        }
+        } finally {
+        res.end();
+        }
+        return;
+    }
+
+    return webRes;
+    }
 
   private buildHeaders(): Headers {
     const { cors } = this.options;
@@ -128,9 +152,12 @@ class SSEResponseStream<T> {
   }
 }
 
-export const createSSEResponse = <T>(
+
+export const createSSEResponse = async <T>(
   fetchDataFn: () => Promise<T>,
   options: SSEOptions<T> = {}
-): Response => {
-  return new SSEResponseStream(fetchDataFn, options).create();
+): Promise<Response> => {
+  const streamInstance = new SSEResponseStream(fetchDataFn, options);
+  const webRes = streamInstance.create();
+  return await SSEResponseStream.adaptResponse(webRes, options.res);
 };

@@ -1,23 +1,26 @@
-import http, { IncomingMessage, ServerResponse } from 'http'
-import { createSSEResponse } from '../../dist/easse.cjs'
+import http from 'http';
+import { createSSEResponse } from '../../dist/easse.cjs';
 
-const server = http.createServer((req: IncomingMessage, res: ServerResponse) => {
-  if (req.method === 'GET' && req.url === '/sse/static') {
-    return createSSEResponse(async () => ({status: "ok"}), {
-      interval: 2000,
-      cors: false
-    })
-  } else if (req.method === "GET" && req.url === "/sse/dynamic") {
-    return createSSEResponse(async () => ({ status: "ok", number: Math.random() }), {
-      cors: false,
-      interval: 2000,
-    })
-  } else {
-    res.writeHead(404)
-    res.end('Not Found')
+const server = http.createServer(async (req, res) => {
+  if (req.url === '/sse/native' && req.method === 'GET') {
+    try {
+      await createSSEResponse(
+        async () => ({ time: new Date().toISOString(), type: 'native' }),
+        { 
+          res,
+          interval: 2000,
+          minify: true 
+        }
+      );
+    } catch (err) {
+      res.writeHead(500);
+      res.end('SSE Error');
+    }
+    return;
   }
-})
 
-server.listen(3000, () => {
-  console.log('Server running at http://localhost:3000')
-})
+  res.writeHead(404);
+  res.end('Not Found');
+});
+
+server.listen(3000, () => console.log('Node.js SSE: http://localhost:3000/sse/native'));
