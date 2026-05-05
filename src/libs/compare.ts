@@ -22,8 +22,8 @@ export class DataEqualCheckModule {
   resolveCompareFn<T>(a: T, b: T): (x: T, y: T) => boolean {
     const needsDeep = this.depCheck(a) || this.depCheck(b);
     return needsDeep
-      ? this.autoDiff.deepCompare.bind(this)
-      : this.autoDiff.shallowCompare.bind(this);
+      ? this.autoDiff.deepCompare.bind(this.autoDiff)
+      : this.autoDiff.shallowCompare.bind(this.autoDiff);
   }
 
   // resolveCompareFnV2<T>(a: T, _: T): (_: T, y: T) => boolean {

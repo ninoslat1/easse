@@ -36,15 +36,15 @@ export class AutoDiffModule {
     public comparePayload(payload: any, minify: boolean = false): string {
         if (payload === null || payload === undefined) return "";
 
-        if (typeof payload === "object" && payload !== null){
-            return JSON.stringify(payload);
-        }
-
         if (typeof payload === 'string') {
             if (minify && this.minifyHtml.isHTML(payload)) {
                 return this.minifyHtml.minifyHTML(payload);
             }
             return payload.replace(/\r?\n|\r/g, "").trim();
+        }
+
+        if (typeof payload === "object") {
+            return JSON.stringify(payload);
         }
 
         return String(payload);
