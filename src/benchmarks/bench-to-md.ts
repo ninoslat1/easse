@@ -22,7 +22,7 @@ const lines = input.split("\n");
 const rows: Row[] = [];
 
 for (const line of lines) {
-  const clean = line.replace(/\x1b\[[0-9;]*m/g, "").trim(); // remove ANSI
+  const clean = line.replace(/\x1b\[[0-9;]*m/g, "").trim();
 
   const match = clean.match(/^(.+?)\s+([\d.]+)\s?(ps|ns|µs|ms)\/iter/);
 
@@ -38,11 +38,13 @@ for (const line of lines) {
   }
 }
 
-// grouping
 const comparison = rows.filter(r =>
   r.name.toLowerCase().includes("compare") ||
   r.name.toLowerCase().includes("depcheck") ||
-  r.name.toLowerCase().includes("reference")
+  r.name.toLowerCase().includes("reference") ||
+  r.name.toLowerCase().includes("merkle") ||
+  r.name.toLowerCase().includes("hash") ||
+  r.name.toLowerCase().includes("scan")
 );
 
 const html = rows.filter(r =>
@@ -70,8 +72,6 @@ let output = `## Benchmark\n\nGenerated from mitata benchmark\n\n---\n\n`;
 
 output += generateTable("🧠 Comparison Logic Performance", comparison);
 output += generateTable("🌐 HTML Processing Performance", html);
-
-// highlight fastest
 const fastest = [...rows].sort((a, b) => b.ops - a.ops)[0];
 if (fastest) {
   output += `---\n\n### ⚡ Highlight\n`;

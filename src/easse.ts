@@ -1,17 +1,22 @@
 import { AutoDiffModule } from "./libs/auto-diffing";
 import { DataEqualCheckModule } from "./libs/compare";
+import { DataHashModule } from "./libs/hashing";
 import { HTMLModule } from "./libs/html";
 import type { SSEOptions } from "./types";
 
-class SSEResponseStream<T> {
+export class SSEResponseStream<T> {
   private intervalId?: ReturnType<typeof setInterval>;
   private retryCount = 0;
   private minifyHtml = new HTMLModule()
   private encoder = new TextEncoder();
   private customCompareFn: ((a: T, b: T) => boolean) | undefined;
   private minify = false;
+  private hash = new DataHashModule()
   private autoDiff = new AutoDiffModule(this.minifyHtml);
   private checker = new DataEqualCheckModule(this.autoDiff);
+  private lastTreeMap = new Map<string, string>();
+  private lastData: T | null = null;
+  private namespace: string
 
   constructor(
     private fetchDataFn: () => Promise<T>,
@@ -19,6 +24,7 @@ class SSEResponseStream<T> {
   ) {
     this.customCompareFn = options.compareFn;
     this.minify = options.minify ?? false;
+    this.namespace = options.namespace ?? "data"
   }
 
   public create(): Response {
@@ -76,58 +82,90 @@ class SSEResponseStream<T> {
     return h;
   }
 
-  private resolveCompareFn(lastRes: T, newRes: T): (a: T, b: T) => boolean {
+  private resolveCompareFn(lastRes: T | null, newRes: T): (a: T, b: T) => boolean {
     if (this.customCompareFn) return this.customCompareFn;
     return this.checker.resolveCompareFn(lastRes, newRes);
   }
 
+  private async execV2(
+    lastRes: T | null, 
+    controller: ReadableStreamDefaultController, 
+    namespace: string
+  ): Promise<T | null> {
+    const newRes = await this.fetchDataFn();
+
+    if (lastRes === null) {
+      const format = this.autoDiff.comparePayload(newRes, this.minify);
+      controller.enqueue(this.encoder.encode(`${namespace}: ${format}\n\n`));
+      return newRes;
+    }
+
+    const delta = this.hash.getDeltaLazy(lastRes, newRes);
+
+    if (!delta) {
+      controller.enqueue(this.encoder.encode(": ping\n\n"));
+      return lastRes;
+    }
+
+    const format = this.autoDiff.comparePayload(delta, this.minify);
+    controller.enqueue(this.encoder.encode(`${namespace}: ${format}\n\n`));
+    
+    return newRes;
+  }
+
+  // private async execV2(controller: ReadableStreamDefaultController): Promise<void> {
+  //   try {
+  //     const { namespace = "data" } = this.options;
+  //     const newRes = await this.fetchDataFn();
+      
+  //     const newTreeMap = this.hash.generateTreeMap(newRes);
+  //     const rootHash = newTreeMap.get("root");
+  //     const lastRootHash = this.lastTreeMap.get("root");
+
+  //     if (lastRootHash === rootHash) {
+  //       controller.enqueue(this.encoder.encode(": ping\n\n"));
+  //       return;
+  //     }
+
+  //     const payload = this.lastData 
+  //       ? this.hash.getDeltaLazy(this.lastTreeMap, newTreeMap, newRes)
+  //       : newRes;
+
+  //     const format = this.autoDiff.comparePayload(payload, this.minify);
+  //     const message = `${namespace}: ${format}\n\n`;
+  //     controller.enqueue(this.encoder.encode(message));
+
+  //     this.lastTreeMap = newTreeMap;
+  //     this.lastData = newRes;
+  //     this.retryCount = 0;
+
+  //   } catch (err) {
+  //     this.handleError(err, controller);
+  //   }
+  // }
+
+  private async execV1(newData: T, lastData: T | null) {
+    const compareFn = this.resolveCompareFn(lastData, newData);
+
+    if (lastData === null || !compareFn(lastData, newData)) {
+      return this.autoDiff.comparePayload(newData, this.minify);
+    }
+
+    return null;
+  }
+
   private async start(controller: ReadableStreamDefaultController) {
     controller.enqueue(this.encoder.encode(": connected\n\n"));
-
-    const { interval = 5000, namespace = "data" } = this.options;
+    const { interval = 5000 } = this.options;
 
     if (interval > 10000) {
-      const intervalError = `event: error\ndata: ${JSON.stringify({ message: "Interval cannot exceed 10000ms" })}\n\n`;
-      controller.enqueue(this.encoder.encode(intervalError));
-      this.stop();
-      controller.close();
+      this.handleError("Interval cannot exceed 10000ms", controller);
       return;
     }
 
-    const exec = async (lastRes: T | null): Promise<T | null> => {
-      try {
-        const newRes = await this.fetchDataFn();
+    await this.execV2(this.lastData, controller, this.namespace);
 
-        const format = this.autoDiff.comparePayload(newRes, this.minify);
-
-        if (lastRes === null) {
-          const message = `${namespace}: ${format}\n\n`;
-          controller.enqueue(this.encoder.encode(message));
-          this.retryCount = 0;
-          return newRes;
-        }
-
-        const compareFn = this.resolveCompareFn(lastRes, newRes);
-
-        if (!compareFn(lastRes, newRes)) {
-          const message = `${namespace}: ${format}\n\n`;
-          controller.enqueue(this.encoder.encode(message));
-          this.retryCount = 0;
-          return newRes;
-        } else {
-          controller.enqueue(this.encoder.encode(": ping\n\n"));
-          return lastRes;
-        }
-      } catch (err) {
-        return this.handleError(err, controller);
-      }
-    };
-
-    let lastResult = await exec(null);
-
-    this.intervalId = setInterval(async () => {
-      lastResult = await exec(lastResult);
-    }, interval);
+    this.intervalId = setInterval(() => this.execV2(this.lastData, controller, this.namespace), interval);
   }
 
   private handleError(err: any, controller: ReadableStreamDefaultController): any {
@@ -149,6 +187,19 @@ class SSEResponseStream<T> {
 
   private stop() {
     if (this.intervalId) clearInterval(this.intervalId);
+  }
+
+  public async benchmarkV1(newData: T, lastData: T | null) {
+    const compareFn = this.resolveCompareFn(lastData, newData);
+    if (lastData === null || !compareFn(lastData, newData)) {
+      return this.autoDiff.comparePayload(newData, this.minify);
+    }
+    return null;
+  }
+
+  public async benchmarkV2(newData: T, lastData: T | null) {
+    if (lastData === null) return newData;
+    return this.hash.getDeltaLazy(lastData, newData);
   }
 }
 

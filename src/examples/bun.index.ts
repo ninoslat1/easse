@@ -1,6 +1,5 @@
 import { createSSEResponse } from '../../dist/easse.cjs';
 
-// --- Constants & Templates ---
 const PORT = 3000;
 
 const HTML_UI = `
@@ -41,39 +40,33 @@ const SSEHandlers = {
         <small style="color: #666">Server Time: ${new Date().toLocaleTimeString()}</small>
       </div>
     `;
-  }, { interval: 2000 }), // Pakai fitur minify bawaan easse
+  }, { interval: 2000 }),
 
-  // Handler untuk JSON Static
   handleStatic: () => createSSEResponse(async () => ({ status: "ok" }), {
     interval: 5000 
   }),
 
-  // Handler untuk JSON Dynamic
   handleDynamic: () => createSSEResponse(async () => ({ 
     status: "ok", 
     number: Math.random() 
   }), { interval: 2000 })
 };
 
-// --- Server Configuration ---
 const server = Bun.serve({
   port: PORT,
   async fetch(req) {
     const url = new URL(req.url);
 
-    // 1. Static UI Route
     if (url.pathname === "/") {
       return new Response(HTML_UI, {
         headers: { "Content-Type": "text/html" }
       });
     }
 
-    // 2. SSE Routes
     if (url.pathname === "/sse/html") return SSEHandlers.handleHTML();
     if (url.pathname === "/sse/static") return SSEHandlers.handleStatic();
     if (url.pathname === "/sse/dynamic") return SSEHandlers.handleDynamic();
 
-    // 3. Fallback 404
     return new Response(JSON.stringify({ error: "Not Found" }), { 
       status: 404,
       headers: { "Content-Type": "application/json" }

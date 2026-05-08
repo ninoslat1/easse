@@ -3,25 +3,22 @@ import { DataEqualCheckModule } from "../libs/compare";
 import { flatData1, flatData2, flatIdenticalData, mockHTML, nestedData1, nestedData2, nestedIdenticalData } from './bench.data';
 import { AutoDiffModule } from '../libs/auto-diffing';
 import { HTMLModule } from '../libs/html';
+import { SSEResponseStream } from '../easse';
 
 const minifyHtml = new HTMLModule()
 const autoDiff = new AutoDiffModule(minifyHtml);
-const checker = new DataEqualCheckModule(autoDiff);
 const rawSize = new TextEncoder().encode(mockHTML).length;
 const sanitized = autoDiff.comparePayload(mockHTML, false);
 const minified = autoDiff.comparePayload(mockHTML, true);
-
 const sanitizedSize = new TextEncoder().encode(sanitized).length;
 const minifiedSize = new TextEncoder().encode(minified).length;
-
 const saved = ((rawSize - minifiedSize) / rawSize * 100).toFixed(2);
+const sseInstance = new SSEResponseStream(async () => nestedData1, { 
+  minify: true,
+  namespace: "test" 
+});
 
 group('Comparison Logic Performance (Class Based) V1', () => {
-  
-  bench("Same Reference (Flat)", () => {
-    autoDiff.shallowCompare(flatIdenticalData, flatIdenticalData);
-  });
-
   summary(() => {
     bench('Shallow Compare (Flat Data - Different)', () => {
       autoDiff.shallowCompare(flatData1, flatData2);
@@ -32,16 +29,8 @@ group('Comparison Logic Performance (Class Based) V1', () => {
     });
   })
 
-  bench('Deep Compare (Nested Data - Identical)', () => {
-    autoDiff.deepCompare(nestedIdenticalData, nestedIdenticalData);
-  });
-
   bench('Deep Compare (Nested Data - Different)', () => {
     autoDiff.deepCompare(nestedData1, nestedData2);
-  });
-
-  bench('DepCheck Performance', () => {
-    checker.depCheck(nestedData1);
   });
 });
 
@@ -55,6 +44,43 @@ console.log(`
 | Minified     | ${minifiedSize.toLocaleString()} B      | ${saved}%       |
 ---------------------------------------------
 `);
+
+group('SSE Engine: V1 (Deep) vs V2 (Merkle Tree)', () => {
+
+  summary(() => {
+    bench('V1: Full Scan & Full Payload (Nested)', async () => {
+      await (sseInstance as any).benchmarkV1(nestedData2, nestedData1);
+    });
+
+    bench('V2: Merkle Tree & Delta Payload (Nested)', async () => {
+      await (sseInstance as any).benchmarkV2(nestedData2, nestedData1);
+    });
+  });
+
+  group('Identical Data Performance', () => {
+    summary(() => {
+      bench('V1 Identical: Deep Compare Scan', async () => {
+        await (sseInstance as any).benchmarkV1(nestedIdenticalData, nestedIdenticalData);
+      });
+  
+      bench('V2 Identical: Merkle Tree Scan', async () => {
+        await (sseInstance as any).benchmarkV2(nestedIdenticalData, nestedIdenticalData);
+      });
+    })
+  });
+
+  group('Flat Data Performance', () => {
+    summary(() => {
+      bench('V1 Flat: Shallow Compare Scan', async () => {
+        await (sseInstance as any).benchmarkV1(flatData2, flatData1);
+      });
+  
+      bench('V2 Flat: Merkle Tree Scan', async () => {
+        await (sseInstance as any).benchmarkV2(flatData2, flatData1);
+      });
+    })
+  });
+});
 
 group("HTML Processing Performance", () => {
   summary(() => {
@@ -73,53 +99,5 @@ group("HTML Processing Performance", () => {
   });
 });
 
-// group("Comparison Logic Performance (Class Based) V2", () => {
-  
-//   summary(() => {
-//     bench("Comparison Resolver V1 (Flat Data - Identical)", () => {
-//       const fn = checker.resolveCompareFn(flatIdenticalData, flatIdenticalData);
-//       fn(flatIdenticalData, flatIdenticalData)
-//     })
-  
-//     bench("Comparison Resolver V2 (Flat Data - Identical)", () => {
-//       const fn = checker.resolveCompareFnV2(flatIdenticalData, flatIdenticalData);
-//       fn(flatIdenticalData, flatIdenticalData);
-//     });
-//   })
-
-//   summary(() => {
-//     bench("Comparison Resolver V1 (Flat Data - Different)", () => {
-//       const fn = checker.resolveCompareFn(flatData1, flatData2);
-//       fn(flatData1, flatData2)
-//     })
-  
-//     bench("Comparison Resolver V2 (Flat Data - Different)", () => {
-//       const fn = checker.resolveCompareFnV2(flatData1, flatData2);
-//       fn(flatData1, flatData2);
-//     });
-//   })
-
-//   summary(() => {
-//     bench("V1: Deep Compare (Static 60KB)", () => {
-//       autoDiff.deepCompare(LARGE_STATIC, [...LARGE_STATIC]);
-//     });
-
-//     bench("V2: Smart Detect Hashing (Static 60KB)", () => {
-//       const fn = checker.resolveCompareFnV2(LARGE_STATIC, [...LARGE_STATIC]);
-//       fn(LARGE_STATIC, [...LARGE_STATIC]);
-//     });
-//   });
-
-//   summary(() => {
-//     bench("V1: Deep Compare (Dynamic 60KB)", () => {
-//       autoDiff.deepCompare(dynamicA, dynamicB);
-//     });
-
-//     bench("V2: Smart Detect Hashing (Dynamic 60KB)", () => {
-//       const fn = checker.resolveCompareFnV2(dynamicA, dynamicB);
-//       fn(dynamicA, dynamicB);
-//     });
-//   });
-// });
 
 await run();

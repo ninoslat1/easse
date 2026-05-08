@@ -5,12 +5,12 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ESNext", "DOM", "DOM.Iterable"], // Menambahkan tipe Response & ReadableStream
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     
     /* Output Settings */
     "rootDir": "./src",
     "outDir": "./dist",
-    "declaration": true, // Menghasilkan file .d.ts untuk user TypeScript
+    "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "removeComments": false,
