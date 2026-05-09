@@ -1,6 +1,6 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Lightweight SSE adapters for your backend",
   "license": "MIT",
   "author": "ninoslat1",
