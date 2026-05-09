@@ -43,7 +43,7 @@ export class SSEResponseStream<T> {
     return new Response(stream, { headers: this.buildHeaders() });
   }
 
-  public static async adaptResponse(webRes: Response, res?: any) {
+  public static async adaptResponse(webRes: Response, res?: any): Promise<Response | void> {
     if (res && res.write && typeof res.on === "function") {
       res.writeHead(webRes.status, Object.fromEntries(webRes.headers));
 
@@ -156,5 +156,6 @@ export const createSSEResponse = async <T>(
   });
 
   const webRes = streamInstance.create();
-  return await SSEResponseStream.adaptResponse(webRes, options.res);
+  const response = await SSEResponseStream.adaptResponse(webRes, options.res);
+  return (response || new Response(null, {status: 200})) as Response
 };
