@@ -38,7 +38,7 @@ Here is the basic setup for native JavaScript Runtimes setup
 
 **Bun**
 
-```bun
+```javascript
 if (req.url.endsWith("/sse")) {
   return createSSEResponse(
     async () => {
@@ -114,4 +114,4 @@ const options = {
 };
 ```
 
-For further example for framework, check this [link]("https://github.com/ninoslat1/easse/tree/main/src/examples")
+For further example for framework, check this [link](https://github.com/ninoslat1/easse/tree/main/src/examples)
