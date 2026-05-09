@@ -1,9 +1,44 @@
 {
   "name": "@ninoslat1/easse",
   "version": "0.1.4",
+  "description": "Lightweight SSE adapters for your backend",
+  "license": "MIT",
   "author": "ninoslat1",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
   "main": "./dist/easse.js",
   "module": "./dist/easse.mjs",
+  "types": "./dist/easse.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/easse.js",
+      "require": "./dist/easse.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "build": "oxfmt && tsdown",
+    "dev": "tsup src/easse.ts --format cjs,esm --watch --dts",
+    "bench": "bun run ./src/benchmarks/compare.bench.ts > bench.txt && bun run ./src/benchmarks/bench-to-md.ts",
+    "bun-example": "bun run /src/examples/bun.index.ts",
+    "node-example": "node --experimental-strip-types ./src/examples/node.index.ts",
+    "express-example": "node --experimental-strip-types ./src/examples/express.index.ts",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "test:all": "npm run test:bun && npm run test:node"
+  },
+  "dependencies": {
+    "xxhash-wasm": "^1.1.0"
+  },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.2",
@@ -13,41 +48,13 @@
     "hono": "^4.12.10",
     "jsr": "^0.14.3",
     "mitata": "^1.0.34",
-    "tsup": "^8.5.1",
+    "oxfmt": "^0.48.0",
+    "oxlint": "^1.63.0",
+    "tsdown": "^0.22.0",
     "tsx": "^4.21.0",
     "vitepress": "^1.6.4"
   },
   "peerDependencies": {
     "typescript": "^6.0.2"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/easse.js",
-      "require": "./dist/easse.js"
-    }
-  },
-  "description": "Lightweight SSE adapters for your backend",
-  "files": [
-    "dist"
-  ],
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs",
-    "build": "tsup",
-    "dev": "tsup src/easse.ts --format cjs,esm --watch --dts",
-    "bench": "bun run ./src/benchmarks/compare.bench.ts > bench.txt && bun run ./src/benchmarks/bench-to-md.ts",
-    "bun-example": "bun run /src/examples/bun.index.ts",
-    "node-example": "node --experimental-strip-types ./src/examples/node.index.ts",
-    "express-example": "node --experimental-strip-types ./src/examples/express.index.ts",
-    "test:bun": "bun test ./src/tests/bun.test.ts",
-    "test:node": "tsx --test ./src/tests/node.test.ts",
-    "test:all": "npm run test:bun && npm run test:node"
-  },
-  "type": "module",
-  "types": "./dist/easse.d.ts"
+  }
 }

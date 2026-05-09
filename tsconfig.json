@@ -6,7 +6,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    
+
     /* Output Settings */
     "rootDir": "./src",
     "outDir": "./dist",
@@ -20,7 +20,7 @@
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    
+
     /* Interop & Agnostic Tools */
     "esModuleInterop": true,
     "isolatedModules": true,

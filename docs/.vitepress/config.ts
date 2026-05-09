@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -8,22 +8,20 @@ export default defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Quickstart', link: '/onboard' }
+      { text: "Home", link: "/" },
+      { text: "Quickstart", link: "/onboard" },
     ],
 
     sidebar: [
       {
-        text: 'Examples',
+        text: "Examples",
         items: [
-          { text: 'Intro', link: '/intro' },
-          { text: 'Quickstart', link: '/onboard' }
-        ]
-      }
+          { text: "Intro", link: "/intro" },
+          { text: "Quickstart", link: "/onboard" },
+        ],
+      },
     ],
 
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
-    ]
-  }
-})
+    socialLinks: [{ icon: "github", link: "https://github.com/vuejs/vitepress" }],
+  },
+});

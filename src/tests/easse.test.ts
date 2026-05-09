@@ -2,12 +2,13 @@ import { createSSEResponse } from "../easse";
 
 export async function runSSETest(assert: (a: any, b: any, msg?: string) => void) {
   const mockData = { hello: "world" };
-  const response = createSSEResponse(async () => mockData, { 
+  const response = createSSEResponse(async () => mockData, {
     interval: 500,
-    namespace: "data" 
+    namespace: "data",
+    engine: "delta",
   });
 
-  const reader = response.body?.getReader();
+  const reader = (await response).body?.getReader();
   if (!reader) throw new Error("Response body is empty");
   const decoder = new TextDecoder();
 
@@ -15,7 +16,11 @@ export async function runSSETest(assert: (a: any, b: any, msg?: string) => void)
   assert(decoder.decode(chunk1.value), ": connected\n\n", "Should send connected first");
 
   const chunk2 = await reader.read();
-  assert(decoder.decode(chunk2.value), `data: ${JSON.stringify(mockData)}\n\n`, "Should send initial data");
+  assert(
+    decoder.decode(chunk2.value),
+    `data: ${JSON.stringify(mockData)}\n\n`,
+    "Should send initial data",
+  );
 
   const chunk3 = await reader.read();
   assert(decoder.decode(chunk3.value), ": ping\n\n", "Should send ping on identical data");

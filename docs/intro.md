@@ -11,21 +11,23 @@ Building SSE manually can be tricky:
 - Managing headers correctly
 - Formatting events
 - Handling multiple runtimes (Node, Bun, etc.)
+
 #### Easse solves these problems with a minimal abstraction layer.
 
 ## ✨ Key Features
 
 ### 🔌 Plug & Play
+
 Drop it into your existing controller or route handler.
 
-### ⚡ Lightweight
-No dependencies. No overhead.
-
 ### ➕ Extensible
+
 Customize behavior based on your backend logic.
 
 ### ⚙️ Runtime Agnostic
+
 Works across different JavaScript runtimes:
+
 - Node.js
 - Bun
 - Deno (optional support)
@@ -35,6 +37,7 @@ Works across different JavaScript runtimes:
 Server-Sent Events (SSE) is a standard for streaming data from server to client over HTTP.
 
 Unlike WebSockets:
+
 - One-way (server → client)
 - Simpler to implement
 - Works over standard HTTP
@@ -51,6 +54,7 @@ While SSE is simple and powerful, it comes with some trade-offs:
 ## 🧠 When should you use Easse?
 
 Use Easse when you need these feature:
+
 - Live updates (dashboard, logs)
 - Streaming APIs
 - Notifications

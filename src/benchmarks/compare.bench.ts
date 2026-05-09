@@ -1,97 +1,93 @@
-import { run, bench, group, summary } from 'mitata';
+import { run, bench, group, summary } from "mitata";
 import { DataEqualCheckModule } from "../libs/compare";
-import { flatData1, flatData2, flatIdenticalData, mockHTML, nestedData1, nestedData2, nestedIdenticalData } from './bench.data';
-import { AutoDiffModule } from '../libs/auto-diffing';
-import { HTMLModule } from '../libs/html';
-import { SSEResponseStream } from '../easse';
+import { flatData1, flatIdenticalData, mockHTML, nestedData1, nestedData2 } from "./bench.data";
+import { AutoDiffModule } from "../libs/auto-diffing";
+import { HTMLModule } from "../libs/html";
+import { DataHashModule } from "../libs/hashing";
+import { StandardEngine } from "../engines/std";
+import { DeltaEngine } from "../engines/delta";
+import { createHash } from "crypto";
 
-const minifyHtml = new HTMLModule()
+const hashMD5 = new DataHashModule("md5");
+const hashSHA = new DataHashModule("sha256");
+const hashXX = new DataHashModule("xxhash");
+
+const minifyHtml = new HTMLModule();
 const autoDiff = new AutoDiffModule(minifyHtml);
-const rawSize = new TextEncoder().encode(mockHTML).length;
-const sanitized = autoDiff.comparePayload(mockHTML, false);
-const minified = autoDiff.comparePayload(mockHTML, true);
-const sanitizedSize = new TextEncoder().encode(sanitized).length;
-const minifiedSize = new TextEncoder().encode(minified).length;
-const saved = ((rawSize - minifiedSize) / rawSize * 100).toFixed(2);
-const sseInstance = new SSEResponseStream(async () => nestedData1, { 
-  minify: true,
-  namespace: "test" 
-});
+const hasher = new DataHashModule();
 
-group('Comparison Logic Performance (Class Based) V1', () => {
+const stdEngine = new StandardEngine(new DataEqualCheckModule(autoDiff), autoDiff, false);
+const deltaEngine = new DeltaEngine(hasher, autoDiff, false);
+
+group("Hashing Performance (Small Flat Object)", () => {
   summary(() => {
-    bench('Shallow Compare (Flat Data - Different)', () => {
-      autoDiff.shallowCompare(flatData1, flatData2);
+    bench("MD5", () => {
+      hashMD5.hashValue(flatData1);
     });
-  
-    bench('Deep Compare (Flat Data - Different)', () => {
-      autoDiff.deepCompare(flatData1, flatData2);
+    bench("SHA-256", () => {
+      hashSHA.hashValue(flatData1);
     });
-  })
-
-  bench('Deep Compare (Nested Data - Different)', () => {
-    autoDiff.deepCompare(nestedData1, nestedData2);
+    bench("xxHash3 (Native)", () => {
+      hashXX.hashValue(flatData1);
+    });
   });
 });
 
-console.log(`
-📊 **Payload Size Comparison:**
----------------------------------------------
-| Type         | Size (Bytes) | Reduction    |
-|--------------|--------------|--------------|
-| Raw HTML     | ${rawSize.toLocaleString()} B      | -            |
-| Sanitized    | ${sanitizedSize.toLocaleString()} B      | ${((rawSize - sanitizedSize) / rawSize * 100).toFixed(2)}%        |
-| Minified     | ${minifiedSize.toLocaleString()} B      | ${saved}%       |
----------------------------------------------
-`);
-
-group('SSE Engine: V1 (Deep) vs V2 (Merkle Tree)', () => {
-
+group("Hashing Performance (Large HTML Payload)", () => {
   summary(() => {
-    bench('V1: Full Scan & Full Payload (Nested)', async () => {
-      await (sseInstance as any).benchmarkV1(nestedData2, nestedData1);
+    bench("MD5 (Crypto)", () => {
+      createHash("md5").update(mockHTML).digest("hex");
     });
 
-    bench('V2: Merkle Tree & Delta Payload (Nested)', async () => {
-      await (sseInstance as any).benchmarkV2(nestedData2, nestedData1);
+    bench("SHA-256 (Crypto)", () => {
+      createHash("sha256").update(mockHTML).digest("hex");
     });
-  });
 
-  group('Identical Data Performance', () => {
-    summary(() => {
-      bench('V1 Identical: Deep Compare Scan', async () => {
-        await (sseInstance as any).benchmarkV1(nestedIdenticalData, nestedIdenticalData);
-      });
-  
-      bench('V2 Identical: Merkle Tree Scan', async () => {
-        await (sseInstance as any).benchmarkV2(nestedIdenticalData, nestedIdenticalData);
-      });
-    })
-  });
-
-  group('Flat Data Performance', () => {
-    summary(() => {
-      bench('V1 Flat: Shallow Compare Scan', async () => {
-        await (sseInstance as any).benchmarkV1(flatData2, flatData1);
-      });
-  
-      bench('V2 Flat: Merkle Tree Scan', async () => {
-        await (sseInstance as any).benchmarkV2(flatData2, flatData1);
-      });
-    })
+    bench("xxHash3 (Native)", () => {
+      hashXX.hashLargePayload(mockHTML);
+    });
   });
 });
 
-group("HTML Processing Performance", () => {
+group("Tree Mapping Performance (Merkle Tree Construction)", () => {
   summary(() => {
-    bench("HTML Sanitization Only (Minify: false)", () => {
+    bench("Merkle Tree (MD5)", () => {
+      hashMD5.generateTreeMap(nestedData1);
+    });
+    bench("Merkle Tree (SHA)", () => {
+      hashSHA.generateTreeMap(nestedData1);
+    });
+    bench("Merkle Tree (xxHash3)", () => {
+      hashXX.generateTreeMap(nestedData1);
+    });
+  });
+});
+
+group("SSE Engine Full Workflow (V1 vs V2)", () => {
+  summary(() => {
+    bench("V1: Standard (Deep Compare)", async () => {
+      await stdEngine.execute(nestedData1, nestedData2);
+    });
+
+    bench("V2: Delta (Merkle + xxHash)", async () => {
+      await deltaEngine.execute(nestedData1, nestedData2);
+    });
+  });
+
+  bench("V2: Short Circuit (Identical Data)", async () => {
+    await deltaEngine.execute(flatIdenticalData, flatIdenticalData);
+  });
+});
+
+group("HTML Processing & Minification", () => {
+  summary(() => {
+    bench("HTML Sanitization", () => {
       autoDiff.comparePayload(mockHTML, false);
     });
-  
-    bench("HTML Full Minify (Minify: true)", () => {
+    bench("HTML Full Minify", () => {
       autoDiff.comparePayload(mockHTML, true);
     });
-  })
+  });
 
   const jsonObject = { data: Array(20).fill({ name: "item", val: Math.random() }) };
   bench("JSON Stringify (Baseline)", () => {
@@ -99,5 +95,16 @@ group("HTML Processing Performance", () => {
   });
 });
 
+group("Internal Utility Performance", () => {
+  bench("getDelta (Merkle-based)", () => {
+    const m1 = hashXX.generateTreeMap(nestedData1);
+    const m2 = hashXX.generateTreeMap(nestedData2);
+    hashXX.getDelta(m1, m2, nestedData2);
+  });
+
+  bench("getDeltaLazy (Recursive)", () => {
+    hashXX.getDeltaLazy(nestedData1, nestedData2);
+  });
+});
 
 await run();

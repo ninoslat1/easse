@@ -3,14 +3,14 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - 'docs/**'
-      - '**.md'
-      - '.github/**'
-      - 'src/examples/bun.index.ts'
-      - 'src/examples/node.index.ts'
-      - 'src/examples/express.index.ts'
-      - 'src/examples/hono.index.ts'
-      - 'src/examples/elysia.index.ts'
+      - "docs/**"
+      - "**.md"
+      - ".github/**"
+      - "src/examples/bun.index.ts"
+      - "src/examples/node.index.ts"
+      - "src/examples/express.index.ts"
+      - "src/examples/hono.index.ts"
+      - "src/examples/elysia.index.ts"
 
 jobs:
   publish-jsr:
@@ -31,14 +31,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-      
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
       - name: Install & Build
         run: |
           npm install
           npm run build
-          
+
       - name: Publish to NPM
         run: npm publish --access public
         env:

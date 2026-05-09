@@ -1,4 +1,4 @@
-import { createSSEResponse } from '../../dist/easse.cjs';
+import { createSSEResponse } from "../../dist/easse.cjs";
 
 const PORT = 3000;
 
@@ -29,37 +29,46 @@ const HTML_UI = `
 `;
 
 const SSEHandlers = {
-  handleHTML: () => createSSEResponse(async () => {
-    const num = Math.random().toFixed(5);
-    const isUp = Math.random() > 0.5;
+  handleHTML: () =>
+    createSSEResponse(
+      async () => {
+        const num = Math.random().toFixed(5);
+        const isUp = Math.random() > 0.5;
 
-    return `
-      <div class="card" style="border-left: 5px solid ${isUp ? '#4caf50' : '#f44336'}">
-        <h2 style="margin:0">Indicator: ${isUp ? '📈' : '📉'}</h2>
+        return `
+      <div class="card" style="border-left: 5px solid ${isUp ? "#4caf50" : "#f44336"}">
+        <h2 style="margin:0">Indicator: ${isUp ? "📈" : "📉"}</h2>
         <p style="font-size: 2rem; margin: 10px 0;">${num}</p>
         <small style="color: #666">Server Time: ${new Date().toLocaleTimeString()}</small>
       </div>
     `;
-  }, { interval: 2000 }),
+      },
+      { minify: true, interval: 10000, engine: "delta" },
+    ),
 
-  handleStatic: () => createSSEResponse(async () => ({ status: "ok" }), {
-    interval: 5000 
-  }),
+  handleStatic: () =>
+    createSSEResponse(async () => ({ status: "ok" }), {
+      interval: 5000,
+    }),
 
-  handleDynamic: () => createSSEResponse(async () => ({ 
-    status: "ok", 
-    number: Math.random() 
-  }), { interval: 2000 })
+  handleDynamic: () =>
+    createSSEResponse(
+      async () => ({
+        status: "ok",
+        number: Math.random(),
+      }),
+      { interval: 2000, engine: "delta" },
+    ),
 };
 
-const server = Bun.serve({
+Bun.serve({
   port: PORT,
   async fetch(req) {
     const url = new URL(req.url);
 
     if (url.pathname === "/") {
       return new Response(HTML_UI, {
-        headers: { "Content-Type": "text/html" }
+        headers: { "Content-Type": "text/html" },
       });
     }
 
@@ -67,9 +76,9 @@ const server = Bun.serve({
     if (url.pathname === "/sse/static") return SSEHandlers.handleStatic();
     if (url.pathname === "/sse/dynamic") return SSEHandlers.handleDynamic();
 
-    return new Response(JSON.stringify({ error: "Not Found" }), { 
+    return new Response(JSON.stringify({ error: "Not Found" }), {
       status: 404,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
   },
 });

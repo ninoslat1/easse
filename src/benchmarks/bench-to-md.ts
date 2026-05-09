@@ -10,27 +10,50 @@ type Row = {
 
 function parseTimeToMs(value: number, unit: string): number {
   switch (unit) {
-    case "ps": return value / 1e9;
-    case "ns": return value / 1e6;
-    case "µs": return value / 1e3;
-    case "ms": return value;
-    default: return value;
+    case "ps":
+      return value / 1_000_000_000;
+    case "ns":
+      return value / 1_000_000;
+    case "µs":
+      return value / 1_000;
+    case "ms":
+      return value;
+    default:
+      return value;
   }
 }
 
 const lines = input.split("\n");
 const rows: Row[] = [];
+let payloadStats = "";
+let capturePayload = false;
 
 for (const line of lines) {
-  const clean = line.replace(/\x1b\[[0-9;]*m/g, "").trim();
+  if (line.includes("Payload Size Comparison")) {
+    capturePayload = true;
+    payloadStats += "### 📊 Payload Size Comparison\n\n```text\n";
+    continue;
+  }
 
-  const match = clean.match(/^(.+?)\s+([\d.]+)\s?(ps|ns|µs|ms)\/iter/);
+  if (capturePayload) {
+    if (line.includes("---") && payloadStats.split("\n").length > 5) {
+      payloadStats += line.replace(/[^| \-a-zA-Z0-9%()]/g, "") + "\n```\n\n";
+      capturePayload = false;
+    } else {
+      payloadStats += line.replace(/\x1b\[[0-9;]*m/g, "") + "\n";
+    }
+  }
+
+  const clean = line
+    .replace(/\x1b\[[0-9;]*m/g, "")
+    .replace(/•/g, "")
+    .trim();
+  const match = clean.match(/^(.+?)\s{2,}([\d\.]+)\s+(ps|ns|µs|ms)\/iter/);
 
   if (match) {
     const name = match[1].trim();
     const value = parseFloat(match[2]);
     const unit = match[3];
-
     const avgMs = parseTimeToMs(value, unit);
     const ops = Math.round(1000 / avgMs);
 
@@ -38,50 +61,41 @@ for (const line of lines) {
   }
 }
 
-const comparison = rows.filter(r =>
-  r.name.toLowerCase().includes("compare") ||
-  r.name.toLowerCase().includes("depcheck") ||
-  r.name.toLowerCase().includes("reference") ||
-  r.name.toLowerCase().includes("merkle") ||
-  r.name.toLowerCase().includes("hash") ||
-  r.name.toLowerCase().includes("scan")
-);
-
-const html = rows.filter(r =>
-  r.name.toLowerCase().includes("html") ||
-  r.name.toLowerCase().includes("json")
-);
+const hashAndLogic = rows.filter((r) => /hash|merkle|compare|delta|v1|v2/i.test(r.name));
+const htmlAndCompression = rows.filter((r) => /html|json|minify|sanitize/i.test(r.name));
 
 function formatNumber(n: number) {
   return n.toLocaleString("en-US");
 }
 
 function generateTable(title: string, data: Row[]) {
+  if (data.length === 0) return "";
   let md = `### ${title}\n\n`;
-  md += `| Test Case | ops/sec ↑ | avg (ms) ↓ |\n`;
-  md += `|-----------|----------|------------|\n`;
-
+  md += `| Test Case | ops/sec ↑ | avg latency ↓ |\n`;
+  md += `| :--- | :--- | :--- |\n`;
   for (const r of data) {
-    md += `| ${r.name} | ${formatNumber(r.ops)} | ${r.avgMs.toFixed(6)} |\n`;
+    const latencyStr =
+      r.avgMs < 0.001 ? `${(r.avgMs * 1_000_000).toFixed(2)} ns` : `${r.avgMs.toFixed(4)} ms`;
+    md += `| ${r.name} | **${formatNumber(r.ops)}** | ${latencyStr} |\n`;
   }
-
   return md + "\n";
 }
 
-let output = `## Benchmark\n\nGenerated from mitata benchmark\n\n---\n\n`;
+let finalOutput = `## 🚀 Benchmark & Payload Analysis\n\n`;
+finalOutput += `Generated on: ${new Date().toLocaleString()}\n\n---\n\n`;
 
-output += generateTable("🧠 Comparison Logic Performance", comparison);
-output += generateTable("🌐 HTML Processing Performance", html);
-const fastest = [...rows].sort((a, b) => b.ops - a.ops)[0];
-if (fastest) {
-  output += `---\n\n### ⚡ Highlight\n`;
-  output += `🔥 Fastest: **${fastest.name}** (${formatNumber(fastest.ops)} ops/sec)\n\n`;
+if (payloadStats) {
+  finalOutput += payloadStats + "---\n\n";
 }
 
-output += `### 📌 Notes\n`;
-output += `- Higher ops/sec = better throughput\n`;
-output += `- Lower avg latency = better performance\n`;
+finalOutput += generateTable("🧠 Engine Performance (V1 vs V2)", hashAndLogic);
+finalOutput += generateTable("🌐 HTML & Compression Performance", htmlAndCompression);
 
-writeFileSync("./benchmark.md", output);
+const fastest = [...rows].sort((a, b) => b.ops - a.ops)[0];
+if (fastest) {
+  finalOutput += `### ⚡ Performance Highlight\n`;
+  finalOutput += `🔥 **Fastest Overall**: \`${fastest.name}\` with **${formatNumber(fastest.ops)}** ops/sec.\n\n`;
+}
 
-console.log("✅ benchmark.md generated!");
+writeFileSync("./benchmark.md", finalOutput);
+console.log("✅ benchmark.md generated");
