@@ -27,7 +27,7 @@ npx jsr add @ninoslat1/easse
 
 For the documentation, see https://ninoslat1.github.io/easse/
 
----
+## **If you are using an LLM to build with @ninoslat1/easse, please refer to [llms.txt](./llms.txt) for optimized context.**
 
 ## Release Notes
 

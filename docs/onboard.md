@@ -45,13 +45,13 @@ if (req.url.endsWith("/sse")) {
       // Fetch your real-time data here
       return {
         timestamp: Date.now(),
-        status: "active"
+        status: "active",
       };
     },
     {
       interval: 1000, // Poll every 1s
       cors: true,
-    }
+    },
   );
 }
 ```

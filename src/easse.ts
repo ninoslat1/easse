@@ -157,5 +157,5 @@ export const createSSEResponse = async <T>(
 
   const webRes = streamInstance.create();
   const response = await SSEResponseStream.adaptResponse(webRes, options.res);
-  return (response || new Response(null, {status: 200})) as Response
+  return (response || new Response(null, { status: 200 })) as Response;
 };

@@ -1,0 +1,280 @@
+# @ninoslat1/easse — LLM Reference
+
+Lightweight, zero-dependency SSE (Server-Sent Events) adapter for Node.js and Bun.
+
+## Installation
+
+```bash
+npm install @ninoslat1/easse
+# or
+bun add @ninoslat1/easse
+# or
+npx jsr add @ninoslat1/easse
+```
+
+## Core Capabilities
+
+- **Merkle Tree Diffing**: High-performance change detection using root-hash comparison.
+- **xxHash Integration**: Optimized for Bun's native hashing addon for nanosecond latency.
+- **Universal Adapter**: Compatible with Node.js (`ServerResponse`) and Web Standards (`Response`).
+
+## Technical Constraints
+
+- **Runtime**: Works on Node.js and Bun. xxHash3 performance optimization is only available on Bun.
+- **Node.js runtime version**: No specific minimum version required for end users.
+- **Data Types**: Best-suited for JSON-serializable objects and HTML string fragments.
+
+## API
+
+### `createSSEResponse(fn, options?)`
+
+The single entry point for all SSE functionality.
+
+```typescript
+createSSEResponse(
+  fn: () => Promise<object | string>,
+  options?: SSEOptions
+): Promise<Response>  // Web standard Response (Bun/Deno/Edge)
+                      // void when using Node.js adapter (options.res is provided)
+```
+
+**Parameters:**
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `fn` | `() => Promise<object \| string>` | — | Data factory, called every `interval` |
+| `options.interval` | `number` (ms) | `10000` | How often to push data to the client |
+| `options.engine` | `"standard"` \| `"delta"` | `"standard"` | Change detection strategy (see below) |
+| `options.minify` | `boolean` | `false` | Minify HTML output — only applies to string responses |
+| `options.res` | `http.ServerResponse` | — | **Required for Node.js** — pass the raw `res` object |
+| `options.cors` | `boolean \| CorsOptions` | `false` | CORS configuration — set origin whitelist and credentials for cookie auth |
+| `options.maxRetries` | `number` | `3` | Max retries before cancelling the readable stream on error |
+| `options.onError` | `(error: Error) => void` | — | Custom error handler callback |
+| `options.compareFn` | `(a: T, b: T) => boolean` | — | Custom comparison function — return `true` to suppress the push |
+| `options.namespace` | `string` | — | Namespace identifier for the SSE stream |
+
+**`CorsOptions` fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `origin` | `string | string[]` | Allowed origin(s) — whitelist request origins |
+| `credentials` | `boolean` | Allow cookies in SSE (`Access-Control-Allow-Credentials`) |
+| `headers` | `string` | Custom headers string |
+
+### Engine Options
+
+| Engine | Mechanism | Hashing | Best For |
+|---|---|---|---|
+| `"standard"` | Recursive deep comparison via native Node.js crypto | Native crypto (works on Node.js and Bun) | Node.js users, simple/flat data structures |
+| `"delta"` | Merkle Tree root-hash comparison | xxHash3 via Bun's native addon | Bun users, large/nested objects, performance-critical streams |
+
+**Use `"delta"` when:**
+- Running on **Bun** — xxHash3 is a native Bun addon that provides nanosecond-level hashing, significantly faster than crypto-based approaches.
+- Data is large or deeply nested — Merkle Tree diffing avoids full recursive traversal.
+- Data changes infrequently — delta skips the push entirely when root hash matches.
+
+**Use `"standard"` when:**
+- Running on **Node.js** — `"delta"` still works on Node.js but loses the xxHash3 advantage; `"standard"` is more appropriate.
+- Data is simple or flat — recursive deep comparison is sufficient and has less overhead for shallow objects.
+- Data changes every interval — delta diffing adds overhead with no benefit if data always changes.
+
+> **Note:** `"delta"` falls back gracefully on Node.js but is optimized for Bun. Always prefer `"standard"` for Node.js / Express projects.
+
+## Code Patterns for AI Generation
+
+When generating code for `@ninoslat1/easse`, always follow these rules:
+
+**1. Always use `createSSEResponse` — never implement manual SSE streams:**
+
+```typescript
+// ✅ Correct
+const response = await createSSEResponse(fn, options);
+
+// ❌ Avoid
+res.write(`data: ${JSON.stringify(payload)}\n\n`);
+```
+
+**2. For Node.js / Express, always pass `res` in options and use `engine: "standard"`:**
+
+```typescript
+// Node.js http
+await createSSEResponse(fn, { res: nodeResponse, interval: 2000, engine: "standard" });
+
+// Express
+app.get("/sse", async (req, res) => {
+  await createSSEResponse(fn, { res, interval: 2000, engine: "standard" });
+});
+```
+
+**3. For Bun, use `engine: "delta"` to leverage native xxHash3:**
+
+```typescript
+return createSSEResponse(fn, { interval: 2000, engine: "delta" });
+```
+
+**4. `minify: true` is only for HTML string responses, not JSON:**
+
+```typescript
+// ✅ HTML — minify is useful
+createSSEResponse(async () => `<div>${content}</div>`, { minify: true });
+
+// ❌ JSON — minify has no effect, omit it
+createSSEResponse(async () => ({ status: "ok" }), { minify: true });
+```
+
+## Troubleshooting AI Suggestions
+
+- If the AI suggests `crypto.createHash('md5')` or manual hashing, correct it — the `"delta"` engine uses xxHash3 via Bun's native addon internally; no manual hashing is needed.
+- If the AI suggests recursive deep comparison, remind it that the `"delta"` engine uses Merkle Tree diffing which is 2.7x faster and handled automatically.
+- If the AI uses `engine: "delta"` for a Node.js / Express project, correct it to `engine: "standard"` — `"delta"` is optimized for Bun's native xxHash3 and offers no advantage on Node.js.
+- If the AI uses `engine: "delta"` for data that changes every interval, suggest switching to `engine: "standard"` to avoid unnecessary diffing overhead.
+- If the AI omits `res` for Node.js usage, the SSE stream will silently fail — always pass `options.res`.
+
+## Examples
+
+### Bun
+
+```typescript
+import { createSSEResponse } from "@ninoslat1/easse";
+
+const PORT = 3000;
+
+const HTML_UI = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Easse Demo</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f4f4f9; margin: 0; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 20px; text-align: center; min-width: 300px; }
+  </style>
+</head>
+<body>
+  <h1>Easse Live Stream</h1>
+  <div id="stream-box"><div class="card">Connecting...</div></div>
+  <script>
+    const es = new EventSource('/sse/html');
+    const box = document.getElementById('stream-box');
+    es.onmessage = (e) => box.innerHTML = e.data;
+    es.onerror = () => console.warn('SSE connection closed.');
+  </script>
+</body>
+</html>`;
+
+const handlers = {
+  html: () =>
+    createSSEResponse(
+      async () => {
+        const value = Math.random().toFixed(5);
+        const isUp = Math.random() > 0.5;
+        return `
+          <div class="card" style="border-left: 5px solid ${isUp ? "#4caf50" : "#f44336"}">
+            <h2>${isUp ? "📈" : "📉"} ${isUp ? "Up" : "Down"}</h2>
+            <p style="font-size: 2rem">${value}</p>
+            <small>${new Date().toLocaleTimeString()}</small>
+          </div>`;
+      },
+      { minify: true, interval: 3000, engine: "delta" }
+    ),
+
+  json: () =>
+    createSSEResponse(
+      async () => ({
+        status: "ok",
+        value: Math.random(),
+        timestamp: Date.now(),
+      }),
+      { interval: 2000, engine: "delta" }
+    ),
+};
+
+Bun.serve({
+  port: PORT,
+  async fetch(req) {
+    const { pathname } = new URL(req.url);
+
+    if (pathname === "/") return new Response(HTML_UI, { headers: { "Content-Type": "text/html" } });
+    if (pathname === "/sse/html") return handlers.html();
+    if (pathname === "/sse/json") return handlers.json();
+
+    return new Response(JSON.stringify({ error: "Not Found" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
+  },
+});
+
+console.log(`🚀 Easse running at http://localhost:${PORT}
+  /sse/html  → HTML stream
+  /sse/json  → JSON stream`);
+```
+
+### Node.js (http)
+
+```typescript
+import http from "http";
+import { createSSEResponse } from "@ninoslat1/easse";
+
+const PORT = 3000;
+
+const server = http.createServer(async (req, res) => {
+  if (req.method !== "GET") {
+    res.writeHead(405);
+    res.end("Method Not Allowed");
+    return;
+  }
+
+  if (req.url === "/sse/json") {
+    try {
+      await createSSEResponse(
+        async () => ({
+          status: "ok",
+          value: Math.random(),
+          timestamp: Date.now(),
+        }),
+        { res, interval: 2000, engine: "standard" }
+      );
+    } catch {
+      res.writeHead(500);
+      res.end("SSE Error");
+    }
+    return;
+  }
+
+  res.writeHead(404, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ error: "Not Found" }));
+});
+
+server.listen(PORT, () =>
+  console.log(`🚀 Easse running at http://localhost:${PORT}
+  /sse/json  → JSON stream`)
+);
+```
+
+### Express
+
+```typescript
+import express from "express";
+import { createSSEResponse } from "@ninoslat1/easse";
+
+const app = express();
+
+app.get("/sse/json", async (req, res) => {
+  try {
+    await createSSEResponse(
+      async () => ({
+        status: "ok",
+        value: Math.random(),
+        timestamp: Date.now(),
+      }),
+      { res, interval: 2000, engine: "standard" }
+    );
+  } catch {
+    res.status(500).send("SSE Error");
+  }
+});
+
+app.listen(3000, () =>
+  console.log(`🚀 Easse running at http://localhost:3000
+  /sse/json  → JSON stream`)
+);
+```
