@@ -1,3 +1,5 @@
+import { ptr } from "bun:ffi";
+import { normalize_string } from "../shared/ffi";
 import { HTMLModule } from "./html";
 
 export class AutoDiffModule {
@@ -45,6 +47,27 @@ export class AutoDiffModule {
       return JSON.stringify(payload);
     }
 
+    return String(payload);
+  }
+
+  public comparePayloadV2(payload: any, minify: boolean = false): string {
+    if (payload === null || payload === undefined) return "";
+
+    if (typeof payload === "string") {
+      if (minify && this.minifyHtml.isHTML(payload)) {
+        return this.minifyHtml.minifyHTML(payload);
+      }
+
+      // FFI: strip newlines + trim natively
+      const input = Buffer.from(payload, "utf8");
+      const out = Buffer.alloc(input.length);
+      const outLen = new BigInt64Array(1);
+
+      normalize_string(ptr(input), input.length, ptr(out), ptr(outLen));
+      return out.subarray(0, Number(outLen[0])).toString("utf8");
+    }
+
+    if (typeof payload === "object") return JSON.stringify(payload);
     return String(payload);
   }
 }

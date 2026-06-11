@@ -1,6 +1,6 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Lightweight SSE adapters for your backend",
   "license": "MIT",
   "author": "ninoslat1",
@@ -8,32 +8,35 @@
     "dist"
   ],
   "type": "module",
-  "main": "./dist/easse.js",
+  "main": "./dist/easse.cjs",
   "module": "./dist/easse.mjs",
-  "types": "./dist/easse.d.ts",
+  "types": "./dist/easse.d.cts",
   "exports": {
     ".": {
-      "import": "./dist/easse.js",
-      "require": "./dist/easse.js"
+      "types": {
+        "import": "./dist/easse.d.mts",
+        "require": "./dist/easse.d.cts"
+      },
+      "import": "./dist/easse.mjs",
+      "require": "./dist/easse.cjs"
     }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "build:ffi": "bun run src/scripts/build-ffi.ts",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "build": "oxfmt && tsdown",
-    "dev": "tsup src/easse.ts --format cjs,esm --watch --dts",
-    "bench": "bun run ./src/benchmarks/compare.bench.ts > bench.txt && bun run ./src/benchmarks/bench-to-md.ts",
+    "bench:func": "bun run ./src/benchmarks/micro.bench.ts > bench.txt && bun run ./src/benchmarks/bench-to-md.ts",
+    "bench:http": " bun run ./src/benchmarks/sse.bench.ts delta dynamic &&  bun run ./src/benchmarks/sse.bench.ts delta static &&  bun run ./src/benchmarks/sse.bench.ts std static &&  bun run ./src/benchmarks/sse.bench.ts std dynamic",
     "bun-example": "bun run /src/examples/bun.index.ts",
     "node-example": "node --experimental-strip-types ./src/examples/node.index.ts",
     "express-example": "node --experimental-strip-types ./src/examples/express.index.ts",
     "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check",
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
     "test:all": "npm run test:bun && npm run test:node"
   },
   "devDependencies": {

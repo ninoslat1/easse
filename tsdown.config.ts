@@ -4,9 +4,10 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   entry: ["src/easse.ts"],
   format: ["cjs", "esm"],
-
   dts: true,
-
+  deps: {
+    neverBundle: ["bun:ffi"],
+  },
   clean: true,
 
   minify: true,

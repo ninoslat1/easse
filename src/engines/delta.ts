@@ -4,6 +4,7 @@ import { AutoDiffModule } from "../libs/auto-diffing";
 
 export class DeltaEngine<T> implements ISSEEngine<T> {
   private lastTreeMap: Map<string, string> | null = null;
+  private lastHash: string | null = null;
 
   constructor(
     private hash: DataHashModule,
@@ -15,17 +16,18 @@ export class DeltaEngine<T> implements ISSEEngine<T> {
     if (newData === lastData) return null;
 
     if (typeof newData === "object" && newData !== null) {
-      const newMap = this.hash.generateTreeMap(newData);
-      if (this.lastTreeMap && newMap.get("root") === this.lastTreeMap.get("root")) {
-        return null;
-      }
+      const newMap = this.hash.generateTreeMapV2(newData);
+      const currentHash = newMap.get("root") || null;
+
+      if (this.lastHash && currentHash === this.lastHash) return null;
 
       const delta = this.lastTreeMap
         ? this.hash.getDelta(this.lastTreeMap, newMap, newData)
         : newData;
 
+      this.lastHash = currentHash;
       this.lastTreeMap = newMap;
-      return this.autoDiff.comparePayload(delta, this.minify);
+      return this.autoDiff.comparePayloadV2(delta, this.minify);
     }
 
     if (String(newData) === String(lastData)) {
@@ -33,6 +35,6 @@ export class DeltaEngine<T> implements ISSEEngine<T> {
     }
 
     this.lastTreeMap = null;
-    return this.autoDiff.comparePayload(newData, this.minify);
+    return this.autoDiff.comparePayloadV2(newData, this.minify);
   }
 }
