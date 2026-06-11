@@ -37,3 +37,4 @@ docs/.vitepress/cache
 package-lock.json
 benchmark.md
 bench.txt
+.zig-cache
