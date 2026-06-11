@@ -25,22 +25,22 @@ jobs:
         run: npx jsr publish
 
   publish-npm:
-    name: Publish to NPM
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run build
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
-          scope: "@ninoslat1" 
 
-      - name: Install & Build
-        run: |
-          npm install
-          npm run build
-
-      - name: Publish to NPM
-        run: npm publish --access public
+      - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
