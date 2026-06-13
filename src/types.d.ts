@@ -12,6 +12,20 @@ export interface SSEHeaders {
   [key: string]: string;
 }
 
+export type FFILib = {
+  combine_bytes: (ptrs: Buffer, lens: Buffer, count: number, out: Buffer, out_len: Buffer) => void;
+  normalize_string: (input: Buffer, len: number, out: Buffer, out_len: Buffer) => void;
+  collect_tree_paths: (
+    json_ptr: Buffer,
+    json_len: number,
+    out_entries: Buffer,
+    out_count: Buffer,
+    path_buf: Buffer,
+    path_buf_cap: number,
+    path_buf_used: Buffer,
+  ) => number;
+};
+
 export type SSEEngineType = "standard" | "delta";
 
 export interface SSEOptions<T> {

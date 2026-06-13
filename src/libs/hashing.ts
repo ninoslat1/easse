@@ -1,5 +1,4 @@
-import { combine_bytes, normalize_string, collect_tree_paths } from "../shared/ffi";
-import { ptr } from "bun:ffi";
+import { bunPtr, getFFI } from "../shared/ffi";
 
 export class DataHashModule {
   private memo = new WeakMap<object, string>();
@@ -7,6 +6,7 @@ export class DataHashModule {
   private NODE_ENTRY_SIZE = 16;
   private MAX_NODES = 4096;
   private PATH_BUF_SIZE = 65536;
+  private ffi = getFFI();
 
   constructor(mode: "md5" | "sha256" | "xxhash" = "xxhash") {
     this.mode = mode ?? "xxhash";
@@ -30,22 +30,42 @@ export class DataHashModule {
     const byteArrays = hashes.map((h) => Buffer.from(h, "hex"));
     const totalLength = byteArrays.reduce((acc, b) => acc + b.length, 0);
 
-    const outBuf = Buffer.alloc(totalLength);
-    const outLen = new BigInt64Array(1);
+    if (this.ffi) {
+      const outBuf = Buffer.alloc(totalLength);
+      const outLen = Buffer.alloc(4);
 
-    const ptrBuf = new BigUint64Array(byteArrays.length);
-    const lenBuf = new BigUint64Array(byteArrays.length);
-    byteArrays.forEach((b, i) => {
-      ptrBuf[i] = BigInt(ptr(b));
-      lenBuf[i] = BigInt(b.length);
-    });
+      const ptrBuf = Buffer.alloc(8 * byteArrays.length);
+      const lenBuf = Buffer.alloc(4 * byteArrays.length);
 
-    combine_bytes(ptr(ptrBuf), ptr(lenBuf), byteArrays.length, ptr(outBuf), ptr(outLen));
+      byteArrays.forEach((b, i) => {
+        ptrBuf.writeBigUInt64LE(BigInt(bunPtr(b)), i * 8);
+        lenBuf.writeUInt32LE(b.length, i * 4);
+      });
 
-    const combined = outBuf.subarray(0, Number(outLen[0]));
+      this.ffi.combine_bytes(ptrBuf, lenBuf, byteArrays.length, outBuf, outLen);
 
-    if (this.mode === "xxhash") return Bun.hash.xxHash3(combined).toString(16);
-    return new Bun.CryptoHasher(this.mode).update(combined).digest("hex");
+      const combined = outBuf.subarray(0, outLen.readUInt32LE(0));
+      return this._hashCombined(combined);
+    }
+
+    const combined = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const arr of byteArrays) {
+      combined.set(arr, offset);
+      offset += arr.length;
+    }
+    return this._hashCombined(combined);
+  }
+
+  private _hashCombined(combined: Uint8Array): string {
+    if (typeof Bun !== "undefined") {
+      if (this.mode === "xxhash") return Bun.hash.xxHash3(combined).toString(16);
+      return new Bun.CryptoHasher(this.mode).update(combined).digest("hex");
+    }
+    const { createHash } = require("node:crypto");
+    return createHash(this.mode === "xxhash" ? "md5" : this.mode)
+      .update(combined)
+      .digest("hex");
   }
 
   public hashMerkleNodes(hashes: string[]): string {
@@ -116,23 +136,24 @@ export class DataHashModule {
       }
     }
 
-    // Serialize obj to JSON for Zig
-    const json = Buffer.from(JSON.stringify(obj), "utf8");
+    if (!this.ffi) {
+      return this.generateTreeMap(obj, path, map);
+    }
 
-    // Allocate buffers
+    const json = Buffer.from(JSON.stringify(obj), "utf8");
     const entriesBuf = Buffer.alloc(this.MAX_NODES * this.NODE_ENTRY_SIZE);
     const outCount = Buffer.alloc(4); // u32
     const pathBuf = Buffer.alloc(this.PATH_BUF_SIZE);
     const pathBufUsed = Buffer.alloc(4); // u32
 
-    const ok = collect_tree_paths(
-      ptr(json),
+    const ok = this.ffi.collect_tree_paths(
+      json,
       json.length,
-      ptr(entriesBuf),
-      ptr(outCount),
-      ptr(pathBuf),
+      entriesBuf,
+      outCount,
+      pathBuf,
       this.PATH_BUF_SIZE,
-      ptr(pathBufUsed),
+      pathBufUsed,
     );
 
     if (ok !== 0) {
@@ -149,7 +170,7 @@ export class DataHashModule {
       const offset = i * this.NODE_ENTRY_SIZE;
       // Read path from flat buffer
       const pathLen = entriesBuf.readUInt32LE(offset + 8);
-      const pathStart = Number(entriesBuf.readBigUInt64LE(offset)) - Number(BigInt(ptr(pathBuf)));
+      const pathStart = Number(entriesBuf.readBigUInt64LE(offset)) - Number(pathBuf);
       const nodePath = pathBuf.subarray(pathStart, pathStart + pathLen).toString("utf8") || "root";
       const isLeaf = entriesBuf.readUInt8(offset + 12) === 1;
 

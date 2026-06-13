@@ -1,8 +1,8 @@
-import { ptr } from "bun:ffi";
-import { normalize_string } from "../shared/ffi";
+import { getFFI } from "../shared/ffi";
 import { HTMLModule } from "./html";
 
 export class AutoDiffModule {
+  private ffi = getFFI();
   constructor(private minifyHtml: HTMLModule) {}
 
   public shallowCompare(a: any, b: any): boolean {
@@ -53,17 +53,20 @@ export class AutoDiffModule {
   public comparePayloadV2(payload: any, minify: boolean = false): string {
     if (payload === null || payload === undefined) return "";
 
+    if (!this.ffi) {
+      return this.comparePayload(payload, minify);
+    }
+
     if (typeof payload === "string") {
       if (minify && this.minifyHtml.isHTML(payload)) {
         return this.minifyHtml.minifyHTML(payload);
       }
 
-      // FFI: strip newlines + trim natively
       const input = Buffer.from(payload, "utf8");
       const out = Buffer.alloc(input.length);
-      const outLen = new BigInt64Array(1);
+      const outLen = Buffer.alloc(4);
 
-      normalize_string(ptr(input), input.length, ptr(out), ptr(outLen));
+      this.ffi.normalize_string(input, input.length, out, outLen);
       return out.subarray(0, Number(outLen[0])).toString("utf8");
     }
 
