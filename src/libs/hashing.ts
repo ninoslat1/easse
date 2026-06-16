@@ -219,47 +219,40 @@ export class DataHashModule {
   }
 
   public getDeltaLazy(oldObj: any, newObj: any): any {
-  if (oldObj === newObj) return null;
+    if (oldObj === newObj) return null;
 
-  if (
-    typeof newObj !== "object" ||
-    newObj === null ||
-    typeof oldObj !== typeof newObj
-  ) {
-    return newObj;
-  }
+    if (typeof newObj !== "object" || newObj === null || typeof oldObj !== typeof newObj) {
+      return newObj;
+    }
 
-  const delta: any = {};
-  let hasChanged = false;
+    const delta: any = {};
+    let hasChanged = false;
 
-  const oldKeys = Object.keys(oldObj);
-  const newKeys = Object.keys(newObj);
+    const oldKeys = Object.keys(oldObj);
+    const newKeys = Object.keys(newObj);
 
-  if (
-    oldKeys.length === newKeys.length &&
-    oldKeys.every((k, i) => k === newKeys[i])
-  ) {
-    for (const key of oldKeys) {
+    if (oldKeys.length === newKeys.length && oldKeys.every((k, i) => k === newKeys[i])) {
+      for (const key of oldKeys) {
+        const childDelta = this.getDeltaLazy(oldObj[key], newObj[key]);
+        if (childDelta !== null) {
+          delta[key] = childDelta;
+          hasChanged = true;
+        }
+      }
+      return hasChanged ? delta : null;
+    }
+
+    const keys = new Set([...oldKeys, ...newKeys]);
+    for (const key of keys) {
       const childDelta = this.getDeltaLazy(oldObj[key], newObj[key]);
       if (childDelta !== null) {
         delta[key] = childDelta;
         hasChanged = true;
       }
     }
+
     return hasChanged ? delta : null;
   }
-
-  const keys = new Set([...oldKeys, ...newKeys]);
-  for (const key of keys) {
-    const childDelta = this.getDeltaLazy(oldObj[key], newObj[key]);
-    if (childDelta !== null) {
-      delta[key] = childDelta;
-      hasChanged = true;
-    }
-  }
-
-  return hasChanged ? delta : null;
-}
 
   public getDelta(oldMap: Map<string, string>, newMap: Map<string, string>, newObj: any): any {
     const delta: any = {};

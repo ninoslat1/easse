@@ -1,6 +1,8 @@
 import { createSSEResponse } from "../../dist/easse.cjs";
 
 const PORT = 3000;
+let activeConnections = 0;
+let totalConnections = 0;
 
 const HTML_UI = `<!DOCTYPE html>
 <html lang="en">
@@ -36,7 +38,9 @@ const handlers = {
             <small>${new Date().toLocaleTimeString()}</small>
           </div>`;
       },
-      { minify: true, interval: 3000, engine: "delta" },
+      { minify: true, interval: 3000, engine: "delta", cors: {
+        
+      } },
     ),
 
   json: () =>
@@ -46,26 +50,57 @@ const handlers = {
         value: Math.random(),
         timestamp: Date.now(),
       }),
-      { interval: 2000, engine: "delta" },
+      { interval: 2000, engine: "delta", cors: {
+        origin: `http://localhost:${PORT}`,
+      }, },
     ),
 };
 
 Bun.serve({
   port: PORT,
+
   async fetch(req) {
     const { pathname } = new URL(req.url);
 
-    if (pathname === "/")
-      return new Response(HTML_UI, { headers: { "Content-Type": "text/html" } });
-    if (pathname === "/sse/html") return handlers.html();
-    if (pathname === "/sse/json") return handlers.json();
+    if (pathname === "/sse/json") {
+      activeConnections++;
+      totalConnections++;
 
-    return new Response(JSON.stringify({ error: "Not Found" }), {
+      req.signal.addEventListener("abort", () => {
+        activeConnections--;
+      });
+
+      return handlers.json();
+    }
+
+    if (pathname === "/sse/html") {
+      activeConnections++;
+      totalConnections++;
+
+      req.signal.addEventListener("abort", () => {
+        activeConnections--;
+      });
+
+      return handlers.html();
+    }
+
+    return new Response("Not Found", {
       status: 404,
-      headers: { "Content-Type": "application/json" },
     });
   },
 });
+
+setInterval(() => {
+  const mem = process.memoryUsage();
+
+  console.log({
+    activeConnections,
+    totalConnections,
+    rss: `${(mem.rss / 1024 / 1024).toFixed(2)} MB`,
+    heapUsed: `${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB`,
+    heapTotal: `${(mem.heapTotal / 1024 / 1024).toFixed(2)} MB`,
+  });
+}, 5000);
 
 console.log(`🚀 Easse running at http://localhost:${PORT}
   /sse/html  → HTML stream

@@ -2,12 +2,12 @@ import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
 const benchmarkMd = readFileSync(join(import.meta.dir, "../../benchmark.md"), "utf-8");
-const readmeMd    = readFileSync(join(import.meta.dir, "../../benchmarks.md"), "utf-8");
+const readmeMd = readFileSync(join(import.meta.dir, "../../benchmarks.md"), "utf-8");
 
 // Deduplicate groups (SSE appears twice in mitata output)
 function deduplicateGroups(md: string): string {
-  const lines   = md.split("\n");
-  const seen    = new Set<string>();
+  const lines = md.split("\n");
+  const seen = new Set<string>();
   const result: string[] = [];
   let skip = false;
 
@@ -51,23 +51,24 @@ const newBenchmarkSection = `## 📊 Benchmark
 ${cleanBenchmark
   .split("\n")
   // strip the top-level title and TOC from benchmark.md
-  .filter((l) => !l.startsWith("# 🚀") && !l.startsWith("> Generated") && !l.startsWith("> Runtime"))
+  .filter(
+    (l) => !l.startsWith("# 🚀") && !l.startsWith("> Generated") && !l.startsWith("> Runtime"),
+  )
   .join("\n")
   // remove TOC block
   .replace(/## Table of Contents[\s\S]*?---/, "")
-  .trim()
-}
+  .trim()}
 `;
 
 const BENCH_START = "<!-- BENCHMARK_START -->";
-const BENCH_END   = "<!-- BENCHMARK_END -->";
+const BENCH_END = "<!-- BENCHMARK_END -->";
 
 let updated: string;
 
 if (readmeMd.includes(BENCH_START) && readmeMd.includes(BENCH_END)) {
   updated = readmeMd.replace(
     new RegExp(`${BENCH_START}[\\s\\S]*?${BENCH_END}`),
-    `${BENCH_START}\n${newBenchmarkSection}\n${BENCH_END}`
+    `${BENCH_START}\n${newBenchmarkSection}\n${BENCH_END}`,
   );
   console.log("✅ Injected into benchmarks.md");
 } else {

@@ -1,5 +1,12 @@
 ## Changelogs
 
+### v0.2.2
+- Add k6 test
+- Remove global types for Bun FFI
+
+### v0.2.1
+- Supress package warn for dlopen module in NodeJS Runtime
+
 ### v0.2.0
 
 - Fixing FFI module on NodeJS Runtime

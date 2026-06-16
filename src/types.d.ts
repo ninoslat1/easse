@@ -1,8 +1,6 @@
 // src/types.d.ts
-declare global {
-  var __bunFFI: any;
-  var __bunFFIPtr: ((buf: Buffer) => number) | undefined;
-}
+
+export type BunPtrFn = (buf: Uint8Array) => number;
 
 export interface CorsOptions {
   origin?: string | string[];

@@ -50,7 +50,6 @@ group("Hashing Performance (Large HTML Payload)", () => {
 });
 
 group("Tree Mapping Performance (Merkle Tree Construction)", () => {
-
   group("Merkle Tree MD5", () => {
     summary(() => {
       bench("V1", () => hashMD5.generateTreeMap(nestedData1));
@@ -71,7 +70,6 @@ group("Tree Mapping Performance (Merkle Tree Construction)", () => {
       bench("V2 (FFI)", () => hashXX.generateTreeMapV2(nestedData1));
     });
   });
-
 });
 
 group("SSE Engine Full Workflow (V1 vs V2)", () => {
@@ -91,7 +89,6 @@ group("SSE Engine Full Workflow (V1 vs V2)", () => {
 });
 
 group("HTML Processing & Minification", () => {
-  
   group("HTML Sanitization", () => {
     summary(() => {
       bench("V1", () => {
@@ -125,11 +122,9 @@ group("HTML Processing & Minification", () => {
       });
     });
   });
-
 });
 
 group("Internal Utility Performance", () => {
-
   group("getDelta (Merkle-based)", () => {
     summary(() => {
       bench("V1 generateTreeMap", () => {
@@ -148,7 +143,6 @@ group("Internal Utility Performance", () => {
   bench("getDeltaLazy (Recursive)", () => {
     hashXX.getDeltaLazy(nestedData1, nestedData2);
   });
-
 });
 
 await run();

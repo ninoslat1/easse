@@ -3,34 +3,41 @@ import { readFileSync, writeFileSync } from "fs";
 const input = readFileSync("./bench.txt", "utf-8");
 
 function stripAnsi(str: string): string {
-  return str.replace(/\x1b\[[0-9;]*m/g, "").replace(/•/g, "").trim();
+  return str
+    .replace(/\x1b\[[0-9;]*m/g, "")
+    .replace(/•/g, "")
+    .trim();
 }
 
 function parseTimeToMs(value: number, unit: string): number {
   switch (unit) {
-    case "ps": return value / 1_000_000_000;
-    case "ns": return value / 1_000_000;
-    case "µs": return value / 1_000;
-    case "ms": return value;
-    default:   return value;
+    case "ps":
+      return value / 1_000_000_000;
+    case "ns":
+      return value / 1_000_000;
+    case "µs":
+      return value / 1_000;
+    case "ms":
+      return value;
+    default:
+      return value;
   }
 }
 
 function formatLatency(avgMs: number): string {
-  if (avgMs < 0.000001)  return `${(avgMs * 1_000_000_000).toFixed(2)} ps`;
-  if (avgMs < 0.001)     return `${(avgMs * 1_000_000).toFixed(2)} ns`;
-  if (avgMs < 1)         return `${(avgMs * 1_000).toFixed(3)} µs`;
+  if (avgMs < 0.000001) return `${(avgMs * 1_000_000_000).toFixed(2)} ps`;
+  if (avgMs < 0.001) return `${(avgMs * 1_000_000).toFixed(2)} ns`;
+  if (avgMs < 1) return `${(avgMs * 1_000).toFixed(3)} µs`;
   return `${avgMs.toFixed(4)} ms`;
 }
 
 function formatOps(avgMs: number): string {
   const ops = 1000 / avgMs;
   if (ops >= 1_000_000_000) return `${(ops / 1_000_000_000).toFixed(2)}B`;
-  if (ops >= 1_000_000)     return `${(ops / 1_000_000).toFixed(2)}M`;
-  if (ops >= 1_000)         return `${(ops / 1_000).toFixed(2)}K`;
+  if (ops >= 1_000_000) return `${(ops / 1_000_000).toFixed(2)}M`;
+  if (ops >= 1_000) return `${(ops / 1_000).toFixed(2)}K`;
   return ops.toFixed(0);
 }
-
 
 type Row = {
   name: string;
@@ -50,7 +57,6 @@ type Group = {
   summary: SummaryEntry | null;
 };
 
-
 const lines = input.split("\n");
 const groups: Group[] = [];
 
@@ -61,7 +67,6 @@ let summaryComparisons: { name: string; ratio: number }[] = [];
 
 for (const raw of lines) {
   const line = stripAnsi(raw);
-
 
   const stripped = raw.replace(/\x1b\[[0-9;]*m/g, "").trim();
   if (stripped.startsWith("•")) {
@@ -112,10 +117,10 @@ for (const raw of lines) {
 
   const benchMatch = line.match(/^(.+?)\s{2,}([\d.]+)\s+(ps|ns|µs|ms)\/iter/);
   if (benchMatch && currentGroup) {
-    const name     = benchMatch[1].trim();
+    const name = benchMatch[1].trim();
     const rawValue = parseFloat(benchMatch[2]);
-    const unit     = benchMatch[3];
-    const avgMs    = parseTimeToMs(rawValue, unit);
+    const unit = benchMatch[3];
+    const avgMs = parseTimeToMs(rawValue, unit);
     currentGroup.rows.push({ name, avgMs, rawValue, unit });
   }
 }
@@ -123,7 +128,6 @@ for (const raw of lines) {
 if (currentGroup && inSummary) {
   currentGroup.summary = { winner: summaryWinner, comparisons: summaryComparisons };
 }
-
 
 function generateGroupMd(group: Group): string {
   let md = `## ${group.title}\n\n`;
@@ -137,8 +141,8 @@ function generateGroupMd(group: Group): string {
 
   for (const row of group.rows) {
     const isFastest = row === fastest;
-    const ratio     = row.avgMs / fastest.avgMs;
-    const badge     = isFastest ? "🏆 fastest" : `${ratio.toFixed(2)}x slower`;
+    const ratio = row.avgMs / fastest.avgMs;
+    const badge = isFastest ? "🏆 fastest" : `${ratio.toFixed(2)}x slower`;
     md += `| \`${row.name}\` | ${formatLatency(row.avgMs)} | **${formatOps(row.avgMs)}/s** | ${badge} |\n`;
   }
 
@@ -147,7 +151,7 @@ function generateGroupMd(group: Group): string {
     md += `\n> 🏆 **Winner: \`${group.summary.winner}\`**`;
     if (group.summary.comparisons.length > 0) {
       const parts = group.summary.comparisons.map(
-        (c) => `**${c.ratio}x** faster than \`${c.name}\``
+        (c) => `**${c.ratio}x** faster than \`${c.name}\``,
       );
       md += ` — ${parts.join(", ")}`;
     }
@@ -156,7 +160,6 @@ function generateGroupMd(group: Group): string {
 
   return md + "\n";
 }
-
 
 const allRows = groups.flatMap((g) => g.rows);
 const globalFastest = [...allRows].sort((a, b) => a.avgMs - b.avgMs)[0];
@@ -169,7 +172,10 @@ md += `---\n\n`;
 
 md += `## Table of Contents\n\n`;
 groups.forEach((g, i) => {
-  const anchor = g.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+  const anchor = g.title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+$/, "");
   md += `${i + 1}. [${g.title}](#${anchor})\n`;
 });
 md += `\n---\n\n`;

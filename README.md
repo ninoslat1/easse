@@ -29,40 +29,6 @@ For the documentation, see https://ninoslat1.github.io/easse/
 
 ## **If you are using an LLM to build with @ninoslat1/easse, please refer to [llms.txt](./llms.txt) for optimized context.**
 
-## Release Notes
-
-### v0.1.9
-- Fixing Bun FFI module interop for NodeJS Runtime
-
-### v0.1.8
-- Add Bun FFI module interop with Zig
-
-### v0.1.5
-- Drop xxHash3 WASM
-
-### v0.1.4
-
-- Migrated from recursive deep comparison to Merkle Tree, achieving a 2.7x speed increase in change detection
-- Integrated WeakMap memoization and Uint8Array buffers to eliminate string overhead and prevent memory leaks
-- Leveraged Bun’s native xxHash3, resulting in 16x faster payload processing compared to legacy methods
-- Optimized short-circuit logic for identical data, making it 90% faster
-- Optimize Merkle with Uint8Array to optimize string overhead
-
-### v0.1.3
-
-- Fixing this.deepCompare error
-
-### v0.1.0
-
-- Optimize HTML streaming performance
-- Improve efficiency for realtime content delivery
-
-### v0.0.1
-
-- Optimize auto diffing mechanism
-
----
-
 ## License
 
 MIT
