@@ -7,9 +7,7 @@ let _loaded = false;
 const BUN_PTR = Symbol.for("easse.bunPtr");
 
 function getStoredPtr(): BunPtrFn | undefined {
-  return (globalThis as Record<symbol, unknown>)[BUN_PTR] as
-    | BunPtrFn
-    | undefined;
+  return (globalThis as Record<symbol, unknown>)[BUN_PTR] as BunPtrFn | undefined;
 }
 
 function setStoredPtr(ptr: BunPtrFn): void {
@@ -32,7 +30,6 @@ export function bunPtr(buf: Buffer): number {
     return 0;
   }
 }
-
 
 function _getBunFFI(): any {
   if (typeof Bun === "undefined") return null;
@@ -98,7 +95,7 @@ export function getFFI(): FFILib | null {
       },
     });
 
-    setStoredPtr(ptr)
+    setStoredPtr(ptr);
     _cache = lib.symbols as FFILib;
     return _cache;
   } catch (e) {

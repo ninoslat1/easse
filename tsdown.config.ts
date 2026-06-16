@@ -6,7 +6,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   minify: true,
-  sourcemap: true,
+  sourcemap: false,
   target: "esnext",
   platform: "node",
   deps: {

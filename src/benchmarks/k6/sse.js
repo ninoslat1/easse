@@ -11,13 +11,10 @@ export const options = {
 };
 
 export default function () {
-  http.get(
-    "http://host.docker.internal:3000/sse/json",
-    {
-      headers: {
-        Accept: "text/event-stream",
-      },
-      timeout: "30s",
-    }
-  );
+  http.get("http://host.docker.internal:3000/sse/json", {
+    headers: {
+      Accept: "text/event-stream",
+    },
+    timeout: "30s",
+  });
 }

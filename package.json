@@ -1,11 +1,16 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Lightweight SSE adapters for your backend",
   "license": "MIT",
   "author": "ninoslat1",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "BENCHMARKS.md",
+    "llms.txt"
   ],
   "type": "module",
   "main": "./dist/easse.cjs",

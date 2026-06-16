@@ -38,9 +38,7 @@ const handlers = {
             <small>${new Date().toLocaleTimeString()}</small>
           </div>`;
       },
-      { minify: true, interval: 3000, engine: "delta", cors: {
-        
-      } },
+      { minify: true, interval: 3000, engine: "delta", cors: {} },
     ),
 
   json: () =>
@@ -50,9 +48,13 @@ const handlers = {
         value: Math.random(),
         timestamp: Date.now(),
       }),
-      { interval: 2000, engine: "delta", cors: {
-        origin: `http://localhost:${PORT}`,
-      }, },
+      {
+        interval: 2000,
+        engine: "delta",
+        cors: {
+          origin: `http://localhost:${PORT}`,
+        },
+      },
     ),
 };
 
