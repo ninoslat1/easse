@@ -31,6 +31,15 @@ For the documentation, see https://ninoslat1.github.io/easse/
 
 ## Release Notes
 
+### v0.1.9
+- Fixing Bun FFI module interop for NodeJS Runtime
+
+### v0.1.8
+- Add Bun FFI module interop with Zig
+
+### v0.1.5
+- Drop xxHash3 WASM
+
 ### v0.1.4
 
 - Migrated from recursive deep comparison to Merkle Tree, achieving a 2.7x speed increase in change detection
@@ -51,32 +60,6 @@ For the documentation, see https://ninoslat1.github.io/easse/
 ### v0.0.1
 
 - Optimize auto diffing mechanism
-
----
-
-## Benchmark
-
-Generated from mitata benchmark
-
-### 🧠 Comparison Logic Performance
-
-| Test Case                   | ops/sec ↑      | avg latency ↓ |
-| --------------------------- | -------------- | ------------- |
-| xxHash3 (Identical Data)    | **2,957,880**  | 338.08 ns     |
-| xxHash3 (Nested Data)       | **2,506,643**  | 398.94 ns     |
-| Merkle Tree (MD5)           | **8,325,008**  | 120.12 ns     |
-| Merkle Tree (SHA)           | **12,274,457** | 81.47 ns      |
-| Merkle Tree (xxHash3)       | **12,716,175** | 78.64 ns      |
-| V1: Standard (Deep Compare) | **884,956**    | 0.0011 ms     |
-| V2: Delta (Merkle + xxHash) | **2,935,995**  | 340.60 ns     |
-
-### 🌐 HTML Processing Performance
-
-| Test Case                 | ops/sec ↑   | avg (ms) ↓ | size (bytes) | reduction |
-| ------------------------- | ----------- | ---------- | ------------ | --------- |
-| HTML Sanitization         | **243,309** | 0.0041 ms  | 3,032        | 3.19%     |
-| HTML Full Minify          | **58,514**  | 0.0171 ms  | 1,428        | 54.41%    |
-| JSON Stringify (Baseline) | **500,000** | 0.0020 ms  | 3,132        | -         |
 
 ---
 

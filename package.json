@@ -1,6 +1,6 @@
 {
   "name": "@ninoslat1/easse",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Lightweight SSE adapters for your backend",
   "license": "MIT",
   "author": "ninoslat1",
@@ -30,7 +30,9 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "build": "oxfmt && tsdown",
-    "bench:func": "bun run ./src/benchmarks/micro.bench.ts > bench.txt && bun run ./src/benchmarks/bench-to-md.ts",
+    "bench:func": "bun run ./src/benchmarks/micro.bench.ts",
+    "bench:func:gen": "bun run ./src/benchmarks/micro.bench.ts > bench.txt && bun run ./src/benchmarks/bench-to-md.ts",
+    "bench:report": "bun run src/benchmarks/reportgen-to-bench.ts",
     "bench:http": " bun run ./src/benchmarks/sse.bench.ts delta dynamic &&  bun run ./src/benchmarks/sse.bench.ts delta static &&  bun run ./src/benchmarks/sse.bench.ts std static &&  bun run ./src/benchmarks/sse.bench.ts std dynamic",
     "bun-example": "bun run /src/examples/bun.index.ts",
     "node-example": "node --experimental-strip-types ./src/examples/node.index.ts",

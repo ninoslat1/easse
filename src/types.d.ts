@@ -1,3 +1,9 @@
+// src/types.d.ts
+declare global {
+  var __bunFFI: any;
+  var __bunFFIPtr: ((buf: Buffer) => number) | undefined;
+}
+
 export interface CorsOptions {
   origin?: string | string[];
   credentials?: boolean;

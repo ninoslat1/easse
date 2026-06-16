@@ -163,12 +163,10 @@ export class DataHashModule {
 
     const count = outCount.readUInt32LE(0);
 
-    // Now hash leaves and build merkle bottom-up
     const hashCache = new Map<string, string>();
 
     for (let i = 0; i < count; i++) {
       const offset = i * this.NODE_ENTRY_SIZE;
-      // Read path from flat buffer
       const pathLen = entriesBuf.readUInt32LE(offset + 8);
       const pathStart = Number(entriesBuf.readBigUInt64LE(offset)) - Number(pathBuf);
       const nodePath = pathBuf.subarray(pathStart, pathStart + pathLen).toString("utf8") || "root";
@@ -220,31 +218,48 @@ export class DataHashModule {
     return new Bun.CryptoHasher("md5").update(input).digest("hex");
   }
 
-  public getDeltaLazy(oldObj: any, newObj: any, path = ""): any {
-    if (oldObj === newObj) return null;
+  public getDeltaLazy(oldObj: any, newObj: any): any {
+  if (oldObj === newObj) return null;
 
-    if (typeof oldObj !== typeof newObj || typeof newObj !== "object" || newObj === null) {
-      return newObj;
-    }
+  if (
+    typeof newObj !== "object" ||
+    newObj === null ||
+    typeof oldObj !== typeof newObj
+  ) {
+    return newObj;
+  }
 
-    const delta: any = {};
-    let hasChanged = false;
+  const delta: any = {};
+  let hasChanged = false;
 
-    const keys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
+  const oldKeys = Object.keys(oldObj);
+  const newKeys = Object.keys(newObj);
 
-    for (const key of keys) {
-      const currentPath = path ? `${path}.${key}` : key;
-
-      const childDelta = this.getDeltaLazy(oldObj[key], newObj[key], currentPath);
-
+  if (
+    oldKeys.length === newKeys.length &&
+    oldKeys.every((k, i) => k === newKeys[i])
+  ) {
+    for (const key of oldKeys) {
+      const childDelta = this.getDeltaLazy(oldObj[key], newObj[key]);
       if (childDelta !== null) {
         delta[key] = childDelta;
         hasChanged = true;
       }
     }
-
     return hasChanged ? delta : null;
   }
+
+  const keys = new Set([...oldKeys, ...newKeys]);
+  for (const key of keys) {
+    const childDelta = this.getDeltaLazy(oldObj[key], newObj[key]);
+    if (childDelta !== null) {
+      delta[key] = childDelta;
+      hasChanged = true;
+    }
+  }
+
+  return hasChanged ? delta : null;
+}
 
   public getDelta(oldMap: Map<string, string>, newMap: Map<string, string>, newObj: any): any {
     const delta: any = {};

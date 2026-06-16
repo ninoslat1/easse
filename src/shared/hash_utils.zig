@@ -46,14 +46,12 @@ export fn normalize_string(
         out[j] = c;
         j += 1;
     }
-    // trim leading
     var start: u32 = 0;
     while (start < j and out[start] == ' ') : (start += 1) {}
     if (start > 0) {
         std.mem.copyForwards(u8, out[0..j], out[start..j]);
         j -= start;
     }
-    // trim trailing
     while (j > 0 and out[j - 1] == ' ') : (j -= 1) {}
     out_len.* = j;
 }
@@ -82,12 +80,10 @@ export fn collect_tree_paths(
     var count: u32 = 0;
     var buf_offset: u32 = 0;
 
-    // Recursive traversal using a stack to avoid actual recursion
 
     var stack = std.ArrayListUnmanaged(Frame).empty;
     defer stack.deinit(allocator);
 
-    // Push root
     stack.append(allocator, .{
         .value = parsed.value,
         .path = "",
@@ -97,10 +93,9 @@ export fn collect_tree_paths(
     while (stack.items.len > 0) {
         const frame = stack.pop().?;
 
-        // Write path into flat buffer
         const path_start = buf_offset;
         const path_bytes = frame.path;
-        if (buf_offset + path_bytes.len > path_buf_cap) return -1; // overflow
+        if (buf_offset + path_bytes.len > path_buf_cap) return -1;
         @memcpy(path_buf[buf_offset..][0..path_bytes.len], path_bytes);
         buf_offset += @intCast(path_bytes.len);
 
@@ -111,7 +106,6 @@ export fn collect_tree_paths(
         };
         count += 1;
 
-        // If object, push children
         if (frame.value == .object) {
             var it = frame.value.object.iterator();
             while (it.next()) |entry| {

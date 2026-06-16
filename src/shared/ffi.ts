@@ -5,22 +5,33 @@ import type { FFILib } from "../types";
 let _cache: FFILib | null = null;
 let _loaded = false;
 
-function safeBunRequire() {
-  if (typeof Bun === "undefined") return null;
-
+export function bunPtr(buf: Buffer): number {
+  if (typeof Bun === "undefined") return 0;
   try {
-    const prefix = "bun";
-    const suffix = "ffi";
-    return require(`${prefix}:${suffix}`);
+    const ptr = globalThis.__bunFFIPtr;
+    if (!ptr) {
+      getFFI();
+      return globalThis.__bunFFIPtr?.(buf) ?? 0;
+    }
+    return ptr(buf);
   } catch {
-    return null;
+    return 0;
   }
 }
 
-export function bunPtr(buf: Buffer): number {
-  if (typeof Bun === "undefined") return 0;
-  const { ptr } = new Function("m", "return require(m)")("bun:ffi");
-  return ptr(buf);
+function _getBunFFI(): any {
+  if (typeof Bun === "undefined") return null;
+  try {
+    if (typeof import.meta.require === "function") {
+      return import.meta.require("bun:ffi");
+    }
+    if (typeof require === "function") {
+      return new Function("m", "return require(m)")("bun:ffi");
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export function getFFI(): FFILib | null {
@@ -30,12 +41,12 @@ export function getFFI(): FFILib | null {
   if (typeof Bun === "undefined") return null;
 
   try {
-    const bunFfi = safeBunRequire();
+    const bunFfi = _getBunFFI();
     if (!bunFfi) return null;
 
-    const { dlopen, FFIType } = require("bun:ffi");
+    const { dlopen, FFIType, ptr } = bunFfi;
 
-    const dir = join(__dirname, "bin");
+    const dir = join(import.meta.dir ?? __dirname, "bin");
     const libPath = (() => {
       switch (process.platform) {
         case "win32":
@@ -72,10 +83,12 @@ export function getFFI(): FFILib | null {
       },
     });
 
+    globalThis.__bunFFIPtr = ptr;
     _cache = lib.symbols as FFILib;
     return _cache;
   } catch (e) {
-    console.warn("[easse] FFI unavailable, using pure JS:", e);
-    return null;
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn(`[easse] FFI unavailable (${msg}), using pure JS`);
+      return null;
   }
 }

@@ -50,17 +50,28 @@ group("Hashing Performance (Large HTML Payload)", () => {
 });
 
 group("Tree Mapping Performance (Merkle Tree Construction)", () => {
-  summary(() => {
-    bench("Merkle Tree (MD5)", () => {
-      hashMD5.generateTreeMap(nestedData1);
-    });
-    bench("Merkle Tree (SHA)", () => {
-      hashSHA.generateTreeMap(nestedData1);
-    });
-    bench("Merkle Tree (xxHash3)", () => {
-      hashXX.generateTreeMap(nestedData1);
+
+  group("Merkle Tree MD5", () => {
+    summary(() => {
+      bench("V1", () => hashMD5.generateTreeMap(nestedData1));
+      bench("V2 (FFI)", () => hashMD5.generateTreeMapV2(nestedData1));
     });
   });
+
+  group("Merkle Tree SHA256", () => {
+    summary(() => {
+      bench("V1", () => hashSHA.generateTreeMap(nestedData1));
+      bench("V2 (FFI)", () => hashSHA.generateTreeMapV2(nestedData1));
+    });
+  });
+
+  group("Merkle Tree xxHash3", () => {
+    summary(() => {
+      bench("V1", () => hashXX.generateTreeMap(nestedData1));
+      bench("V2 (FFI)", () => hashXX.generateTreeMapV2(nestedData1));
+    });
+  });
+
 });
 
 group("SSE Engine Full Workflow (V1 vs V2)", () => {
@@ -80,31 +91,64 @@ group("SSE Engine Full Workflow (V1 vs V2)", () => {
 });
 
 group("HTML Processing & Minification", () => {
-  summary(() => {
-    bench("HTML Sanitization", () => {
-      autoDiff.comparePayload(mockHTML, false);
-    });
-    bench("HTML Full Minify", () => {
-      autoDiff.comparePayload(mockHTML, true);
+  
+  group("HTML Sanitization", () => {
+    summary(() => {
+      bench("V1", () => {
+        autoDiff.comparePayload(mockHTML, false);
+      });
+      bench("V2 (FFI)", () => {
+        autoDiff.comparePayloadV2(mockHTML, false);
+      });
     });
   });
 
-  const jsonObject = { data: Array(20).fill({ name: "item", val: Math.random() }) };
-  bench("JSON Stringify (Baseline)", () => {
-    autoDiff.comparePayload(jsonObject, false);
+  group("HTML Full Minify", () => {
+    summary(() => {
+      bench("V1", () => {
+        autoDiff.comparePayload(mockHTML, true);
+      });
+      bench("V2 (FFI)", () => {
+        autoDiff.comparePayloadV2(mockHTML, true);
+      });
+    });
   });
+
+  group("JSON Stringify", () => {
+    const jsonObject = { data: Array(20).fill({ name: "item", val: Math.random() }) };
+    summary(() => {
+      bench("V1 (Baseline)", () => {
+        autoDiff.comparePayload(jsonObject, false);
+      });
+      bench("V2 (FFI)", () => {
+        autoDiff.comparePayloadV2(jsonObject, false);
+      });
+    });
+  });
+
 });
 
 group("Internal Utility Performance", () => {
-  bench("getDelta (Merkle-based)", () => {
-    const m1 = hashXX.generateTreeMap(nestedData1);
-    const m2 = hashXX.generateTreeMap(nestedData2);
-    hashXX.getDelta(m1, m2, nestedData2);
+
+  group("getDelta (Merkle-based)", () => {
+    summary(() => {
+      bench("V1 generateTreeMap", () => {
+        const m1 = hashXX.generateTreeMap(nestedData1);
+        const m2 = hashXX.generateTreeMap(nestedData2);
+        hashXX.getDelta(m1, m2, nestedData2);
+      });
+      bench("V2 generateTreeMapV2 (FFI)", () => {
+        const m1 = hashXX.generateTreeMapV2(nestedData1);
+        const m2 = hashXX.generateTreeMapV2(nestedData2);
+        hashXX.getDelta(m1, m2, nestedData2);
+      });
+    });
   });
 
   bench("getDeltaLazy (Recursive)", () => {
     hashXX.getDeltaLazy(nestedData1, nestedData2);
   });
+
 });
 
 await run();
